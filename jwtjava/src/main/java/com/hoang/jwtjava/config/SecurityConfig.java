@@ -41,6 +41,14 @@ public class SecurityConfig {
             "/api/v1/auth/refresh"
     };
 
+    /** Springdoc OpenAPI + Swagger UI — không cần JWT để mở tài liệu. */
+    private static final String[] SWAGGER_WHITELIST = {
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**"
+    };
+
     @Value("${jwt.signer-key}")
     private String signerKey;
 
@@ -49,6 +57,7 @@ public class SecurityConfig {
         http
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(SWAGGER_WHITELIST).permitAll()
                 .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
                 .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                 .anyRequest().authenticated()

@@ -7,8 +7,12 @@ import com.hoang.jwtjava.dto.response.ProductImageUploadResponse;
 import com.hoang.jwtjava.dto.response.ProductResponse;
 import com.hoang.jwtjava.service.ProductImageStorageService;
 import com.hoang.jwtjava.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Arrays;
 import java.util.List;
 
+@Tag(name = "Products")
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
@@ -40,17 +45,25 @@ public class ProductController {
                 .urls(productImageStorageService.saveUploadedFiles(list))
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<ProductImageUploadResponse>builder()
-                .message("Upload ảnh thành công")
+                .message("Images uploaded successfully")
                 .result(body)
                 .build());
     }
 
     @GetMapping
+    @Operation(summary = "List products (paginated)", description = """
+            **isFeatured:** omit = *all* products. `true` = featured only. `false` = non-featured only.
+            **Pagination:** use query params `page`, `size`, `sort` (e.g. `sort=createdAt,desc`). Do not use `string` as a sort property.
+            """)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listProducts(
+            @Parameter(description = "Filter by category id; omit = no filter")
             @RequestParam(required = false) Long categoryId,
+            @Parameter(description = "Filter by brand id; omit = no filter")
             @RequestParam(required = false) Long brandId,
+            @Parameter(description = "Omit = all. `true` = featured only. `false` = non-featured only.")
             @RequestParam(required = false) Boolean isFeatured,
+            @ParameterObject
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ProductResponse> page = productService.listProducts(categoryId, brandId, isFeatured, pageable);
         PageResponse<ProductResponse> body = PageResponse.<ProductResponse>builder()
@@ -77,7 +90,7 @@ public class ProductController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<ProductResponse>builder()
-                        .message("Tạo sản phẩm thành công")
+                        .message("Product created successfully")
                         .result(productService.createProduct(request))
                         .build());
     }
@@ -88,7 +101,7 @@ public class ProductController {
             @PathVariable Long id,
             @RequestBody @Valid ProductCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.<ProductResponse>builder()
-                .message("Cập nhật sản phẩm thành công")
+                .message("Product updated successfully")
                 .result(productService.updateProduct(id, request))
                 .build());
     }
@@ -98,7 +111,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
-                .message("Xóa sản phẩm thành công")
+                .message("Product deleted successfully")
                 .build());
     }
 }

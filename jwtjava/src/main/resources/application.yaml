@@ -1,6 +1,14 @@
 server:
   port: 8080
 
+# Swagger UI: /swagger-ui.html  |  OpenAPI: /v3/api-docs
+# Disable in production: springdoc.swagger-ui.enabled=false
+springdoc:
+  swagger-ui:
+    # Preserve tag order from OpenAPI (Authentication first via @OpenAPIDefinition)
+    tags-sorter: none
+    operations-sorter: alpha
+
 spring:
   config:
     import: optional:classpath:application-local.yaml
@@ -13,6 +21,7 @@ spring:
     username: ${JWTJAVA_DATASOURCE_USERNAME:root}
     password: ${JWTJAVA_DATASOURCE_PASSWORD:root}
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: true

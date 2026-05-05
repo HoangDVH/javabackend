@@ -11,25 +11,13 @@
 	<groupId>com.hoang</groupId>
 	<artifactId>jwtjava</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>jwtjava</name>
+	<description>Spring Boot JWT REST API (auth, categories, products)</description>
 	<properties>
 		<java.version>17</java.version>
 		<projectlombok-lombok.version>1.18.46</projectlombok-lombok.version>
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+		<springdoc.version>2.5.0</springdoc.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -47,6 +35,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mysql</groupId>

@@ -20,6 +20,23 @@ cd jwtjava
 
 Ứng dụng: `http://localhost:8080`.
 
+### Swagger / OpenAPI
+
+- **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- **OpenAPI JSON**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+
+Tag order: **Authentication** first, then Categories, Products, Users. Request bodies show **Example Value** from `@Schema(example=…)`.
+
+#### Try on Swagger (typical flow)
+
+1. **Login** — open **Authentication** → `POST /api/v1/auth/login` → **Try it out**. Defaults suggest `admin@gmail.com` / `Admin@123456` (seeded admin). **Execute** → copy `result.accessToken`.
+2. **Authorize** — **Authorize** (lock icon) → scheme **bearer-jwt** → paste **only** the access token (Swagger adds the `Bearer` prefix).
+3. **List products** — **Products** → `GET /api/v1/products` → **Try it out**:
+   - Do **not** set `isFeatured=true` if you want *all* products (omit the param when possible).
+   - Pagination: `page=0`, `size=20`, `sort=createdAt,desc` (do not use `string` as sort property).
+4. **Create product (ADMIN)** — `POST /api/v1/products`: use the example body (`categoryId` e.g. `1`, image https URL). Requires admin token in **Authorize**.
+5. **Upload images** — `POST /api/v1/products/images`: form field **`files`**, ADMIN only.
+
 ## Cấu hình & bảo mật
 
 ### Biến môi trường (khuyến nghị cho môi trường thật)
