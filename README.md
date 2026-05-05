@@ -85,6 +85,18 @@ Tham chiếu: `jwtjava/src/main/resources/application-local.example.yaml`.
 
 Chỉnh `app.cors.allowed-origins` trong `application.yaml` / `application-local.yaml` cho đúng origin SPA (ví dụ `http://localhost:5173`).
 
+## Deploy Render
+
+1. Push code lên GitHub (repo này đã có sẵn `render.yaml` ở thư mục gốc).
+2. Trên Render: **New +** → **Blueprint** → chọn repo.
+3. Render sẽ tạo:
+   - Web service `jwtjava-api` (build bằng `./mvnw ... package`, start bằng `java -jar ...`).
+   - PostgreSQL database `jwtjava-postgres`.
+4. Bắt buộc set secret:
+   - `JWT_SIGNER_KEY` (Base64 256-bit)
+   - `APP_SEED_ADMIN_PASSWORD`
+5. App tự đọc `DATABASE_URL` của Render và convert sang JDBC PostgreSQL khi khởi động.
+
 ## License
 
 Dự án mẫu / nội bộ — bổ sung file `LICENSE` nếu public hóa repo.

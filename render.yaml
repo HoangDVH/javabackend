@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: jwtjava-api
+    runtime: java
+    rootDir: jwtjava
+    buildCommand: chmod +x mvnw && ./mvnw -B -DskipTests clean package
+    startCommand: java -Dserver.port=$PORT -jar target/*.jar
+    envVars:
+      - key: JWT_SIGNER_KEY
+        sync: false
+      - key: APP_SEED_ADMIN_EMAIL
+        value: admin@gmail.com
+      - key: APP_SEED_ADMIN_PASSWORD
+        sync: false
+      - key: APP_SEED_IMAGES_FROM_NETWORK
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jwtjava-postgres
+          property: connectionString
+
+databases:
+  - name: jwtjava-postgres
+    databaseName: jwtjava
+    user: jwtjava
