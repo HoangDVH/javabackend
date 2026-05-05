@@ -84,6 +84,19 @@ public class ProductController {
                 .build());
     }
 
+    @GetMapping("/seller/my")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getMySellerProducts(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) String sellerEmail) {
+        String targetSeller = hasRole(jwt, "ADMIN") && sellerEmail != null && !sellerEmail.isBlank()
+                ? sellerEmail
+                : jwt.getSubject();
+        return ResponseEntity.ok(ApiResponse.<List<ProductResponse>>builder()
+                .result(productService.getSellerProducts(targetSeller))
+                .build());
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(

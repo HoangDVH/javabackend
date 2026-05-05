@@ -17,6 +17,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -42,6 +44,14 @@ public class ProductService {
                 productRepository.findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND))
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getSellerProducts(String sellerEmail) {
+        return productRepository.findBySellerEmailIgnoreCaseOrderByCreatedAtDesc(sellerEmail)
+                .stream()
+                .map(productMapper::toResponse)
+                .toList();
     }
 
     @Transactional
