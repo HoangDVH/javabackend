@@ -23,6 +23,7 @@ public class ProductResponse {
     Long categoryId;
     String categoryName;
     Long brandId;
+    String sellerEmail;
     List<String> images;
     BigDecimal rating;
     boolean isFeatured;

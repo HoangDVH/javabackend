@@ -45,6 +45,9 @@ public class Product {
     @Column(nullable = false, name = "brand_id")
     Long brandId;
 
+    @Column(name = "seller_email", length = 255)
+    String sellerEmail;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_path", length = 512)

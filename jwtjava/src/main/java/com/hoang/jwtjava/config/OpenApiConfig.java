@@ -24,7 +24,9 @@ public class OpenApiConfig {
             "Authentication", 0,
             "Categories", 1,
             "Products", 2,
-            "Users", 3
+            "Orders", 3,
+            "Payments", 4,
+            "Users", 5
     );
 
     @Bean

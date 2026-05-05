@@ -45,32 +45,46 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse createProduct(ProductCreateRequest request) {
+    public ProductResponse createProduct(ProductCreateRequest request, String actorEmail, boolean isAdmin) {
         Category category = resolveCategory(request.getCategoryId());
         Product product = productMapper.toEntity(request, category);
+        if (!isAdmin)
+            product.setSellerEmail(actorEmail);
         product.setImages(productImageStorageService.resolveImageUrlsForPersistence(request.getImages()));
         return productMapper.toResponse(productRepository.save(product));
     }
 
     @Transactional
-    public ProductResponse updateProduct(Long id, ProductCreateRequest request) {
+    public ProductResponse updateProduct(Long id, ProductCreateRequest request, String actorEmail, boolean isAdmin) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        if (!canManageProduct(product, actorEmail, isAdmin))
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         Category category = resolveCategory(request.getCategoryId());
         productMapper.updateEntity(product, request, category);
+        if (!isAdmin && product.getSellerEmail() == null)
+            product.setSellerEmail(actorEmail);
         product.setImages(productImageStorageService.resolveImageUrlsForPersistence(request.getImages()));
         return productMapper.toResponse(productRepository.save(product));
     }
 
     @Transactional
-    public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id))
-            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
+    public void deleteProduct(Long id, String actorEmail, boolean isAdmin) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        if (!canManageProduct(product, actorEmail, isAdmin))
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         productRepository.deleteById(id);
     }
 
     private Category resolveCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+    }
+
+    private boolean canManageProduct(Product product, String actorEmail, boolean isAdmin) {
+        if (isAdmin)
+            return true;
+        return actorEmail != null && actorEmail.equalsIgnoreCase(product.getSellerEmail());
     }
 }

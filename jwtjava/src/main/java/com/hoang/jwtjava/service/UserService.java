@@ -1,5 +1,6 @@
 package com.hoang.jwtjava.service;
 
+import com.hoang.jwtjava.dto.request.RoleAssignmentRequest;
 import com.hoang.jwtjava.dto.request.UserCreationRequest;
 import com.hoang.jwtjava.dto.request.UserUpdateRequest;
 import com.hoang.jwtjava.dto.response.UserResponse;
@@ -13,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
 import java.util.Set;
 
 @Service
@@ -71,9 +74,34 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
+    public UserResponse updateRole(String userId, RoleAssignmentRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        String role = normalizeRole(request.getRole());
+        if (!Set.of("USER", "SELLER", "ADMIN").contains(role))
+            throw new AppException(ErrorCode.ROLE_INVALID);
+
+        Set<String> roles = user.getRoles() != null ? new TreeSet<>(user.getRoles()) : new TreeSet<>();
+        if (request.isEnabled())
+            roles.add(role);
+        else
+            roles.remove(role);
+        if (roles.isEmpty())
+            roles.add("USER");
+        user.setRoles(roles);
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
+
     private UserResponse doUpdate(User user, UserUpdateRequest request) {
         if (request.getPassword() != null && !request.getPassword().isBlank())
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    private String normalizeRole(String role) {
+        if (role == null)
+            throw new AppException(ErrorCode.ROLE_INVALID);
+        return role.trim().toUpperCase(Locale.ROOT);
     }
 }

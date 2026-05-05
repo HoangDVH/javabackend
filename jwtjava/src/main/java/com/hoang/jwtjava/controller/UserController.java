@@ -1,6 +1,7 @@
 package com.hoang.jwtjava.controller;
 
 import com.hoang.jwtjava.dto.request.UserCreationRequest;
+import com.hoang.jwtjava.dto.request.RoleAssignmentRequest;
 import com.hoang.jwtjava.dto.request.UserUpdateRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.UserResponse;
@@ -64,6 +65,17 @@ public class UserController {
                                                                 @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
                 .result(userService.updateUser(id, request))
+                .build());
+    }
+
+    @PatchMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> updateRole(
+            @PathVariable String id,
+            @RequestBody @Valid RoleAssignmentRequest request) {
+        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                .message("User role updated successfully")
+                .result(userService.updateRole(id, request))
                 .build());
     }
 

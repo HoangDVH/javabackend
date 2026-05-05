@@ -17,6 +17,8 @@ import java.net.URISyntaxException;
         @Tag(name = "Authentication", description = "Register, login, JWT introspect and refresh"),
         @Tag(name = "Categories", description = "Product categories"),
         @Tag(name = "Products", description = "Products, pagination, admin image upload"),
+        @Tag(name = "Orders", description = "Create and view your orders"),
+        @Tag(name = "Payments", description = "Pay for your orders"),
         @Tag(name = "Users", description = "User management (admin)")
 })
 public class JwtjavaApplication {

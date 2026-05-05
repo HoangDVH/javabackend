@@ -60,6 +60,7 @@ public class ProductMapper {
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .brandId(product.getBrandId())
+                .sellerEmail(product.getSellerEmail())
                 .images(product.getImages() != null ? List.copyOf(product.getImages()) : List.of())
                 .rating(product.getRating())
                 .isFeatured(product.isFeatured())

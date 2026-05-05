@@ -20,6 +20,11 @@ public enum ErrorCode {
     PRODUCT_NOT_FOUND(1008, "Product not found", HttpStatus.NOT_FOUND),
     CATEGORY_NOT_FOUND(1009, "Category not found", HttpStatus.NOT_FOUND),
     IMAGE_IMPORT_FAILED(1011, "Could not download or save product image", HttpStatus.BAD_REQUEST),
+    ROLE_INVALID(1012, "Invalid role", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_FOUND(1013, "Order not found", HttpStatus.NOT_FOUND),
+    ORDER_ITEM_INVALID(1014, "Order items are invalid", HttpStatus.BAD_REQUEST),
+    OUT_OF_STOCK(1015, "Product is out of stock", HttpStatus.BAD_REQUEST),
+    PAYMENT_INVALID(1016, "Payment request is invalid", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode httpStatusCode) {

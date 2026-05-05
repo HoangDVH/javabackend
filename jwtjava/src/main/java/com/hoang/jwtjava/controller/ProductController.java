@@ -21,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,7 +39,7 @@ public class ProductController {
     private final ProductImageStorageService productImageStorageService;
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductImageUploadResponse>> uploadProductImages(
             @RequestParam("files") MultipartFile[] files) {
         List<MultipartFile> list = files != null ? Arrays.asList(files) : List.of();
@@ -55,7 +57,6 @@ public class ProductController {
             **isFeatured:** omit = *all* products. `true` = featured only. `false` = non-featured only.
             **Pagination:** use query params `page`, `size`, `sort` (e.g. `sort=createdAt,desc`). Do not use `string` as a sort property.
             """)
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listProducts(
             @Parameter(description = "Filter by category id; omit = no filter")
             @RequestParam(required = false) Long categoryId,
@@ -77,7 +78,6 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.<ProductResponse>builder()
                 .result(productService.getProduct(id))
@@ -85,33 +85,52 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProductResponse>> createProduct(@RequestBody @Valid ProductCreateRequest request) {
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody @Valid ProductCreateRequest request) {
+        boolean isAdmin = hasRole(jwt, "ADMIN");
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<ProductResponse>builder()
                         .message("Product created successfully")
-                        .result(productService.createProduct(request))
+                        .result(productService.createProduct(request, jwt.getSubject(), isAdmin))
                         .build());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id,
             @RequestBody @Valid ProductCreateRequest request) {
+        boolean isAdmin = hasRole(jwt, "ADMIN");
         return ResponseEntity.ok(ApiResponse.<ProductResponse>builder()
                 .message("Product updated successfully")
-                .result(productService.updateProduct(id, request))
+                .result(productService.updateProduct(id, request, jwt.getSubject(), isAdmin))
                 .build());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id) {
+        boolean isAdmin = hasRole(jwt, "ADMIN");
+        productService.deleteProduct(id, jwt.getSubject(), isAdmin);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .message("Product deleted successfully")
                 .build());
+    }
+
+    private boolean hasRole(Jwt jwt, String role) {
+        String scope = jwt.getClaimAsString("scope");
+        if (scope == null || scope.isBlank())
+            return false;
+        for (String token : scope.split("\\s+")) {
+            if (role.equalsIgnoreCase(token))
+                return true;
+        }
+        return false;
     }
 }

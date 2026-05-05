@@ -23,7 +23,6 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> listCategories() {
         return ResponseEntity.ok(ApiResponse.<List<CategoryResponse>>builder()
                 .result(categoryService.listCategories())
@@ -31,7 +30,6 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<CategoryResponse>> getCategory(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.<CategoryResponse>builder()
                 .result(categoryService.getCategory(id))
