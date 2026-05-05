@@ -4,7 +4,8 @@ API REST cho auth JWT, danh mục, sản phẩm, upload/lưu ảnh local.
 
 ## Cấu trúc
 
-- `jwtjava/` — module Maven Spring Boot 3 (`./mvnw` trong thư mục đó).
+- `pom.xml` (thư mục gốc repo) — **aggregator Maven**; IntelliJ/Cursor nên **mở cả repo gốc** hoặc *Reload Maven Project* để IDE nạp `jwtjava/` làm module → hết lỗi «Cannot resolve symbol» hàng loạt.
+- `jwtjava/` — module Spring Boot 3 (`./mvnw` trong thư mục đó; chạy build/test chủ yếu ở đây).
 
 ## Yêu cầu
 

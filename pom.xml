@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.hoang</groupId>
+    <artifactId>javabackend-aggregator</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>javabackend-aggregator</name>
+    <description>Maven reactor at repo root. Import this folder in IntelliJ so the jwtjava module loads with full classpath.</description>
+
+    <modules>
+        <module>jwtjava</module>
+    </modules>
+</project>
