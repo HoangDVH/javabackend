@@ -7,6 +7,13 @@ API REST cho auth JWT, danh mục, sản phẩm, upload/lưu ảnh local.
 - `pom.xml` (thư mục gốc repo) — **aggregator Maven**; IntelliJ/Cursor nên **mở cả repo gốc** hoặc *Reload Maven Project* để IDE nạp `jwtjava/` làm module → hết lỗi «Cannot resolve symbol» hàng loạt.
 - `jwtjava/` — module Spring Boot 3 (`./mvnw` trong thư mục đó; chạy build/test chủ yếu ở đây).
 
+### IntelliJ vẫn báo lỗi (Cannot resolve symbol)
+
+1. Cài **plugin Lombok** và bật **Settings → Build, Execution, Deployment → Compiler → Annotation Processors → Enable annotation processing**.
+2. **Project SDK = JDK 17** (`File → Project Structure → Project`).
+3. Cửa sổ **Maven** → **Reload All Projects** (hoặc chuột phải `pom.xml` gốc → **Add as Maven Project**).
+4. **File → Invalidate Caches → Invalidate and Restart**.
+
 ## Yêu cầu
 
 - JDK 17+

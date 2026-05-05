@@ -1,5 +1,9 @@
-# IntelliJ (repo gốc — không commit cấu hình máy)
-.idea/
+# IntelliJ: commit tối thiểu để đồng bộ JDK/Lombok; giữ local-only khỏi git
+.idea/*
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/misc.xml
+!.idea/vcs.xml
 
 # Ảnh upload runtime — giữ thư mục qua .gitkeep
 uploads/*
