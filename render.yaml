@@ -2,7 +2,7 @@ services:
   - type: web
     name: jwtjava-api
     runtime: docker
-    dockerfilePath: ./jwtjava/Dockerfile
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: JWT_SIGNER_KEY
         sync: false
