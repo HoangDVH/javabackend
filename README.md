@@ -89,13 +89,13 @@ Chỉnh `app.cors.allowed-origins` trong `application.yaml` / `application-local
 
 1. Push code lên GitHub (repo này đã có sẵn `render.yaml` ở thư mục gốc).
 2. Trên Render: **New +** → **Blueprint** → chọn repo.
-3. Render sẽ tạo:
-   - Web service `jwtjava-api` (build bằng `./mvnw ... package`, start bằng `java -jar ...`).
-   - PostgreSQL database `jwtjava-postgres`.
-4. Bắt buộc set secret:
+3. Render sẽ tạo web service `jwtjava-api` (Docker, free web tier dùng được).
+4. Dùng PostgreSQL free bên ngoài (khuyến nghị **Neon** hoặc **Supabase**), lấy `DATABASE_URL`.
+5. Bắt buộc set env:
+   - `DATABASE_URL` (từ Neon/Supabase)
    - `JWT_SIGNER_KEY` (Base64 256-bit)
    - `APP_SEED_ADMIN_PASSWORD`
-5. App tự đọc `DATABASE_URL` của Render và convert sang JDBC PostgreSQL khi khởi động.
+6. App tự đọc `DATABASE_URL` và convert sang JDBC PostgreSQL khi khởi động.
 
 ## License
 
