@@ -1,0 +1,72 @@
+package com.hoang.jwtjava.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "products")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(nullable = false, length = 255)
+    String name;
+
+    @Column(columnDefinition = "TEXT")
+    String description;
+
+    @Column(nullable = false)
+    Integer price;
+
+    @Column(nullable = false, name = "discount_price")
+    Integer discountPrice;
+
+    @Column(nullable = false)
+    Integer stock;
+
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "category_id", nullable = false)
+    Category category;
+
+    @Column(nullable = false, name = "brand_id")
+    Long brandId;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "image_path", length = 512)
+    @OrderColumn(name = "sort_order")
+    List<String> images;
+
+    @Column(nullable = false, precision = 3, scale = 2)
+    BigDecimal rating;
+
+    @Column(nullable = false, name = "is_featured")
+    boolean featured;
+
+    @Column(nullable = false, name = "created_at")
+    LocalDate createdAt;
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null)
+            createdAt = LocalDate.now();
+        if (images == null)
+            images = new ArrayList<>();
+        if (rating == null)
+            rating = BigDecimal.ZERO;
+    }
+}

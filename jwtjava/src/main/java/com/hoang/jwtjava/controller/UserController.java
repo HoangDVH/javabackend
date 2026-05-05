@@ -1,0 +1,84 @@
+package com.hoang.jwtjava.controller;
+
+import com.hoang.jwtjava.dto.request.UserCreationRequest;
+import com.hoang.jwtjava.dto.request.UserUpdateRequest;
+import com.hoang.jwtjava.dto.response.ApiResponse;
+import com.hoang.jwtjava.dto.response.UserResponse;
+import com.hoang.jwtjava.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(@RequestBody @Valid UserCreationRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.<UserResponse>builder()
+                        .result(userService.createUser(request))
+                        .build());
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getUsers() {
+        return ResponseEntity.ok(ApiResponse.<List<UserResponse>>builder()
+                .result(userService.getUsers())
+                .build());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getMyInfo(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                .result(userService.getUserByEmail(jwt.getSubject()))
+                .build());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                .result(userService.getUser(id))
+                .build());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(@PathVariable String id,
+                                                                @RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                .result(userService.updateUser(id, request))
+                .build());
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateMyInfo(@AuthenticationPrincipal Jwt jwt,
+                                                                   @RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                .result(userService.updateUserByEmail(jwt.getSubject(), request))
+                .build());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("User deleted successfully")
+                .build());
+    }
+}
