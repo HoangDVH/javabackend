@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="JwtjavaApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+  <configuration default="true" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="jwtjava" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.hoang.jwtjava.JwtjavaApplication" />
     <method v="2">
