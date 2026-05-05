@@ -34,6 +34,7 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenRevocationService tokenRevocationService;
 
     @Value("${jwt.signer-key}")
     private String signerKey;
@@ -67,6 +68,8 @@ public class AuthenticationService {
         }
         if (!JwtTokenKind.REFRESH.equals(claims.get(JwtTokenKind.CLAIM_NAME, String.class)))
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (tokenRevocationService.isRevoked(claims.getId()))
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         User user = userRepository.findByEmail(claims.getSubject())
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
@@ -84,10 +87,18 @@ public class AuthenticationService {
             Claims c = getClaims(request.getToken());
             if (!JwtTokenKind.ACCESS.equals(c.get(JwtTokenKind.CLAIM_NAME, String.class)))
                 isValid = false;
+            if (tokenRevocationService.isRevoked(c.getId()))
+                isValid = false;
         } catch (JwtException e) {
             isValid = false;
         }
         return IntrospectResponse.builder().valid(isValid).build();
+    }
+
+    public void logout(String accessToken, String refreshToken) {
+        tokenRevocationService.cleanupExpired();
+        revokeTokenSilently(accessToken, JwtTokenKind.ACCESS);
+        revokeTokenSilently(refreshToken, JwtTokenKind.REFRESH);
     }
 
     private String generateAccessToken(User user) {
@@ -119,6 +130,20 @@ public class AuthenticationService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    private void revokeTokenSilently(String token, String expectedKind) {
+        if (token == null || token.isBlank())
+            return;
+        try {
+            Claims claims = getClaims(token);
+            String tokenKind = claims.get(JwtTokenKind.CLAIM_NAME, String.class);
+            if (!expectedKind.equals(tokenKind))
+                return;
+            tokenRevocationService.revoke(claims);
+        } catch (JwtException ignored) {
+            // Token invalid/expired already; nothing left to revoke.
+        }
     }
 
     private Key getSignInKey() {

@@ -1,7 +1,9 @@
 package com.hoang.jwtjava.config;
 
 import com.hoang.jwtjava.security.JwtTokenKind;
+import com.hoang.jwtjava.service.TokenRevocationService;
 import io.jsonwebtoken.io.Decoders;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +34,10 @@ import javax.crypto.spec.SecretKeySpec;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final TokenRevocationService tokenRevocationService;
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
             "/api/v1/auth/register",
@@ -94,8 +99,15 @@ public class SecurityConfig {
             return OAuth2TokenValidatorResult.failure(
                     new OAuth2Error("invalid_token", "Not an access token", null));
         };
+        OAuth2TokenValidator<Jwt> revokedValidator = jwt -> {
+            if (tokenRevocationService.isRevoked(jwt.getId())) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "Token has been revoked", null));
+            }
+            return OAuth2TokenValidatorResult.success();
+        };
         OAuth2TokenValidator<Jwt> withExpiry = new JwtTimestampValidator();
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withExpiry, accessOnly));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withExpiry, accessOnly, revokedValidator));
         return decoder;
     }
 

@@ -2,6 +2,7 @@ package com.hoang.jwtjava.controller;
 
 import com.hoang.jwtjava.dto.request.AuthenticationRequest;
 import com.hoang.jwtjava.dto.request.IntrospectRequest;
+import com.hoang.jwtjava.dto.request.LogoutRequest;
 import com.hoang.jwtjava.dto.request.RefreshTokenRequest;
 import com.hoang.jwtjava.dto.request.UserCreationRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
@@ -15,6 +16,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -70,6 +73,20 @@ public class AuthenticationController {
         return ResponseEntity.ok(ApiResponse.<AuthenticationResponse>builder()
                 .message("Token refreshed successfully")
                 .result(authenticationService.refresh(request))
+                .build());
+    }
+
+    /**
+     * POST /api/v1/auth/logout — revoke current access token and optional refresh token.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody(required = false) LogoutRequest request) {
+        String refreshToken = request != null ? request.getRefreshToken() : null;
+        authenticationService.logout(jwt.getTokenValue(), refreshToken);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Logout successful")
                 .build());
     }
 }
