@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="ProjectRunConfigurationManager">
+  <!-- Module phải là submodule Maven jwtjava (có sources), không phải aggregator gốc — tránh ClassNotFoundException -->
+  <configuration default="true" name="JwtjavaApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="jwtjava" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.hoang.jwtjava.JwtjavaApplication" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

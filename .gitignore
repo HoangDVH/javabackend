@@ -4,6 +4,7 @@
 !.idea/encodings.xml
 !.idea/misc.xml
 !.idea/vcs.xml
+!.idea/runConfigurations/
 
 # Ảnh upload runtime — giữ thư mục qua .gitkeep
 uploads/*

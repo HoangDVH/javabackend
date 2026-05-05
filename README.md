@@ -7,6 +7,10 @@ API REST cho auth JWT, danh mục, sản phẩm, upload/lưu ảnh local.
 - `pom.xml` (thư mục gốc repo) — **aggregator Maven**; IntelliJ/Cursor nên **mở cả repo gốc** hoặc *Reload Maven Project* để IDE nạp `jwtjava/` làm module → hết lỗi «Cannot resolve symbol» hàng loạt.
 - `jwtjava/` — module Spring Boot 3 (`./mvnw` trong thư mục đó; chạy build/test chủ yếu ở đây).
 
+### IntelliJ: `ClassNotFoundException: JwtjavaApplication`
+
+Cấu hình chạy (**Run → Edit Configurations**) phải có **Use classpath of module** = module Maven **`jwtjava`** (thư mục con), **không** chọn module aggregator gốc (`javabackend-aggregator`). Repo có sẵn `.idea/runConfigurations/JwtjavaApplication.xml` — sau **Reload Maven**, chọn Run **JwtjavaApplication**.
+
 ### IntelliJ vẫn báo lỗi (Cannot resolve symbol)
 
 1. Cài **plugin Lombok** và bật **Settings → Build, Execution, Deployment → Compiler → Annotation Processors → Enable annotation processing**.
