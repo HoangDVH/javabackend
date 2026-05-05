@@ -1,10 +1,9 @@
 services:
   - type: web
     name: jwtjava-api
-    runtime: java
+    runtime: docker
     rootDir: jwtjava
-    buildCommand: chmod +x mvnw && ./mvnw -B -DskipTests clean package
-    startCommand: java -Dserver.port=$PORT -jar target/*.jar
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: JWT_SIGNER_KEY
         sync: false
