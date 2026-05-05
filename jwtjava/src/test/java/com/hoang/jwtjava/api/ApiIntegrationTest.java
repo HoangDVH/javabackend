@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -20,9 +21,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Sample HTTP integration tests (MockMvc + MySQL as in production).
- * Run: {@code ./mvnw test} — requires MySQL and config from {@code application.yaml}.
+ * Run: {@code ./mvnw test} — profile {@code test} dùng H2 in-memory ({@code application-test.yaml}).
  */
-@SpringBootTest(properties = "app.seed-images-from-network=false")
+@SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class ApiIntegrationTest {
 
