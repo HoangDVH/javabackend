@@ -2,21 +2,24 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: optional:classpath:application-local.yaml
   servlet:
     multipart:
       max-file-size: 5MB
       max-request-size: 50MB
   datasource:
-    url: "jdbc:mysql://localhost:3307/jwtjava"
-    username: root
-    password: root
+    url: ${JWTJAVA_DATASOURCE_URL:jdbc:mysql://localhost:3307/jwtjava}
+    username: ${JWTJAVA_DATASOURCE_USERNAME:root}
+    password: ${JWTJAVA_DATASOURCE_PASSWORD:root}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
 
 jwt:
-  signer-key: "bXktc2VjcmV0LWp3dC1zaWduaW5nLWtleS0yNTZiaXQ="
+  # Dev mặc định — production bắt buộc đặt JWT_SIGNER_KEY (Base64 256-bit).
+  signer-key: ${JWT_SIGNER_KEY:bXktc2VjcmV0LWp3dC1zaWduaW5nLWtleS0yNTZiaXQ=}
   valid-duration: 3600
   refreshable-duration: 36000
 
@@ -31,8 +34,8 @@ app:
   # Khi seed/backfill sản phẩm mẫu: true = tải ảnh từ mạng vào storage; false = chỉ lưu URL Picsum (dùng cho test).
   seed-images-from-network: true
   seed-admin:
-    email: admin@gmail.com
-    password: Admin@123456
+    email: ${APP_SEED_ADMIN_EMAIL:admin@gmail.com}
+    password: ${APP_SEED_ADMIN_PASSWORD:Admin@123456}
   # Ảnh sản phẩm: file lưu dưới {root}/product-images/, URL public khớp public-url-path.
   # Đặt public-base-url (vd: http://localhost:8080) nếu muốn DB lưu URL đầy đủ thay vì chỉ path /files/...
   storage:

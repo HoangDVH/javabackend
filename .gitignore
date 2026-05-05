@@ -1,0 +1,11 @@
+# IntelliJ (repo gốc — không commit cấu hình máy)
+.idea/
+
+# Ảnh upload runtime — giữ thư mục qua .gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp

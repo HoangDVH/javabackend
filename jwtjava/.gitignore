@@ -1,4 +1,12 @@
 HELP.md
+
+# Ghi đè secret local (import tùy chọn từ application.yaml)
+src/main/resources/application-local.yaml
+
+# Ảnh upload runtime — giữ thư mục qua .gitkeep
+uploads/*
+!uploads/.gitkeep
+
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

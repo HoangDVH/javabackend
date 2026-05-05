@@ -1,0 +1,10 @@
+# Sao chép thành application-local.yaml (cùng thư mục, không commit) để ghi đè cấu hình máy bạn.
+#
+# Ví dụ:
+# spring:
+#   datasource:
+#     url: jdbc:mysql://localhost:3306/jwtjava
+#     username: root
+#     password: matkhau
+# jwt:
+#   signer-key: "BASE64_256BIT_CUA_BAN"
