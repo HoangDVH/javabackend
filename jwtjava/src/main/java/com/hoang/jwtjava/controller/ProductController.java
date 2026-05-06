@@ -9,6 +9,9 @@ import com.hoang.jwtjava.service.ProductImageStorageService;
 import com.hoang.jwtjava.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +47,11 @@ public class ProductController {
                     + "Khi tắt: file lưu local như trước và trả path/URL như storage.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductImageUploadResponse>> uploadProductImages(
+            @Parameter(
+                    description = "Một hoặc nhiều file ảnh (multipart). Trên Swagger: bấm **Choose File**, không dùng ô nhập text.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE,
+                            array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
             @RequestParam("files") MultipartFile[] files) {
         List<MultipartFile> list = files != null ? Arrays.asList(files) : List.of();
         ProductImageUploadResponse body = ProductImageUploadResponse.builder()
