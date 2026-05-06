@@ -34,10 +34,10 @@ jwt:
   refresh-cookie:
     # Refresh token sẽ được lưu vào HttpOnly cookie (không trả về trong JSON body).
     name: refresh_token
-    # Lax phù hợp khi frontend/backend khác port nhưng cùng site (localhost).
-    # Nếu frontend ở site khác, đặt None và bật secure=true (bắt buộc HTTPS).
-    same-site: Lax
-    secure: false
+    # Local: Lax + secure=false (http://localhost:5173 ↔ http://localhost:8080 là same-site).
+    # SPA dev gọi API HTTPS khác domain (vd Render): None + secure=true — set qua env trên hosting.
+    same-site: ${JWT_REFRESH_COOKIE_SAME_SITE:Lax}
+    secure: ${JWT_REFRESH_COOKIE_SECURE:false}
 
 # Tài khoản admin tự seed khi app start (nếu email chưa tồn tại).
 # Ghi đè mật khẩu: biến môi trường APP_SEED_ADMIN_PASSWORD hoặc sửa giá trị dưới.

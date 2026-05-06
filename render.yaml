@@ -12,5 +12,10 @@ services:
         sync: false
       - key: APP_SEED_IMAGES_FROM_NETWORK
         value: "false"
+      # Cookie refresh gửi được từ SPA khác domain (vd http://localhost:5173 → HTTPS Render).
+      - key: JWT_REFRESH_COOKIE_SAME_SITE
+        value: None
+      - key: JWT_REFRESH_COOKIE_SECURE
+        value: "true"
       - key: DATABASE_URL
         sync: false
