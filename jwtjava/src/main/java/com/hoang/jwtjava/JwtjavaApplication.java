@@ -1,5 +1,6 @@
 package com.hoang.jwtjava;
 
+import com.hoang.jwtjava.config.CloudinaryProperties;
 import com.hoang.jwtjava.config.CorsProperties;
 import com.hoang.jwtjava.config.StorageProperties;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -12,7 +13,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 @SpringBootApplication
-@EnableConfigurationProperties({StorageProperties.class, CorsProperties.class})
+@EnableConfigurationProperties({StorageProperties.class, CorsProperties.class, CloudinaryProperties.class})
 @OpenAPIDefinition(tags = {
         @Tag(name = "Authentication", description = "Register, login, JWT introspect and refresh"),
         @Tag(name = "Categories", description = "Product categories"),

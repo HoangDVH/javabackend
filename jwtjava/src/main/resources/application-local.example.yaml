@@ -8,3 +8,13 @@
 #     password: matkhau
 # jwt:
 #   signer-key: "BASE64_256BIT_CUA_BAN"
+#
+# Upload ảnh sản phẩm lên Cloudinary (POST /api/v1/products/images → trả secure_url):
+# app:
+#   cloudinary:
+#     enabled: true
+#     cloud-name: "ten_cloud"
+#     api-key: "api_key"
+#     api-secret: "api_secret"
+#     folder: jwtjava/products
+# Hoặc dùng biến môi trường: CLOUDINARY_ENABLED=true, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET

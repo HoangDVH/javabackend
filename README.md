@@ -62,6 +62,10 @@ Tag order: **Authentication** first, then Categories, Products, Users. Request b
 | `JWT_SIGNER_KEY` | Base64 **256 bit** cho ký JWT HS256 |
 | `APP_SEED_ADMIN_EMAIL` | Email tài khoản admin seed |
 | `APP_SEED_ADMIN_PASSWORD` | Mật khẩu admin seed |
+| `CLOUDINARY_ENABLED` | `true` để `POST …/products/images` upload Cloudinary và trả `secure_url` |
+| `CLOUDINARY_CLOUD_NAME` | Dashboard Cloudinary |
+| `CLOUDINARY_API_KEY` | Dashboard Cloudinary |
+| `CLOUDINARY_API_SECRET` | Dashboard Cloudinary |
 
 Trên Windows (PowerShell) ví dụ:
 
@@ -81,7 +85,7 @@ Tham chiếu: `jwtjava/src/main/resources/application-local.example.yaml`.
   - `/login`: trả `accessToken` trong body, set `refresh_token` qua **HttpOnly cookie**.
   - `/refresh`: **không nhận request body**, chỉ đọc refresh token từ cookie.
 - Sản phẩm (cần JWT; admin cho ghi): `/api/v1/products`
-- Upload ảnh (admin): `POST /api/v1/products/images` (`multipart`, field `files`)
+- Upload ảnh (seller/admin): `POST /api/v1/products/images` (`multipart`, field `files`) — bật Cloudinary (`CLOUDINARY_ENABLED=true` + đủ key) thì response là URL Cloudinary; tắt thì vẫn lưu local `/files/...`
 - Ảnh tĩnh: `GET /files/product-images/...` (public)
 
 ## Frontend (CORS)

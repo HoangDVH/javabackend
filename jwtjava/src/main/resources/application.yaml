@@ -60,3 +60,10 @@ app:
     public-base-url: ""
     max-bytes: 5242880
     download-timeout-seconds: 30
+  # Upload POST /api/v1/products/images → Cloudinary khi enabled=true + đủ cred; response trả list URL https.
+  cloudinary:
+    enabled: ${CLOUDINARY_ENABLED:false}
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+    folder: jwtjava/products

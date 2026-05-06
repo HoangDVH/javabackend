@@ -5,6 +5,7 @@ import com.hoang.jwtjava.exception.AppException;
 import com.hoang.jwtjava.exception.ErrorCode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,6 +49,7 @@ public class ProductImageStorageService {
     );
 
     private final StorageProperties props;
+    private final ObjectProvider<CloudinaryUploadService> cloudinaryUploadService;
 
     private Path imagesDir;
     private HttpClient httpClient;
@@ -90,6 +92,10 @@ public class ProductImageStorageService {
      * Lưu các file upload (multipart), trả về URL/path giống luồng tải từ HTTP — dùng cho trường {@code images} khi tạo/cập nhật sản phẩm.
      */
     public List<String> saveUploadedFiles(List<MultipartFile> files) {
+        CloudinaryUploadService cloudinary = cloudinaryUploadService.getIfAvailable();
+        if (cloudinary != null)
+            return cloudinary.uploadProductImages(files);
+
         if (files == null || files.isEmpty())
             throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);
         List<String> out = new ArrayList<>();

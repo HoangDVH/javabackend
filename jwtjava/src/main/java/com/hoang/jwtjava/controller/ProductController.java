@@ -39,6 +39,9 @@ public class ProductController {
     private final ProductImageStorageService productImageStorageService;
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload product images", description =
+            "Khi app.cloudinary.enabled=true: upload lên Cloudinary và trả list secure_url HTTPS. "
+                    + "Khi tắt: file lưu local như trước và trả path/URL như storage.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductImageUploadResponse>> uploadProductImages(
             @RequestParam("files") MultipartFile[] files) {
