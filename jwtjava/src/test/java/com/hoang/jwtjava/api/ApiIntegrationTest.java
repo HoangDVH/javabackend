@@ -53,12 +53,14 @@ class ApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products without token returns 401")
-    void listProducts_withoutToken_returns401() throws Exception {
+    @DisplayName("GET /api/v1/products without token returns 200 (public catalog)")
+    void listProducts_withoutToken_returnsPublicPage() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                         .param("page", "0")
                         .param("size", "5"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1000))
+                .andExpect(jsonPath("$.result.items").isArray());
     }
 
     @Test
