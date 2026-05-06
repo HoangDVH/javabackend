@@ -48,11 +48,11 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductImageUploadResponse>> uploadProductImages(
             @Parameter(
-                    description = "Một hoặc nhiều file ảnh (multipart). Trên Swagger: bấm **Choose File**, không dùng ô nhập text.",
+                    description = "Một hoặc nhiều file ảnh (multipart).",
                     content = @Content(
-                            mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE,
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
-            @RequestParam("files") MultipartFile[] files) {
+            @RequestPart("files") MultipartFile[] files) {
         List<MultipartFile> list = files != null ? Arrays.asList(files) : List.of();
         ProductImageUploadResponse body = ProductImageUploadResponse.builder()
                 .urls(productImageStorageService.saveUploadedFiles(list))
