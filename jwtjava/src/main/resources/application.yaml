@@ -31,6 +31,13 @@ jwt:
   signer-key: ${JWT_SIGNER_KEY:bXktc2VjcmV0LWp3dC1zaWduaW5nLWtleS0yNTZiaXQ=}
   valid-duration: 3600
   refreshable-duration: 36000
+  refresh-cookie:
+    # Refresh token sẽ được lưu vào HttpOnly cookie (không trả về trong JSON body).
+    name: refresh_token
+    # Lax phù hợp khi frontend/backend khác port nhưng cùng site (localhost).
+    # Nếu frontend ở site khác, đặt None và bật secure=true (bắt buộc HTTPS).
+    same-site: Lax
+    secure: false
 
 # Tài khoản admin tự seed khi app start (nếu email chưa tồn tại).
 # Ghi đè mật khẩu: biến môi trường APP_SEED_ADMIN_PASSWORD hoặc sửa giá trị dưới.

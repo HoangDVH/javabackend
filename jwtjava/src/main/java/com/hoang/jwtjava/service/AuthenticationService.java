@@ -2,8 +2,6 @@ package com.hoang.jwtjava.service;
 
 import com.hoang.jwtjava.dto.request.AuthenticationRequest;
 import com.hoang.jwtjava.dto.request.IntrospectRequest;
-import com.hoang.jwtjava.dto.request.RefreshTokenRequest;
-import com.hoang.jwtjava.dto.response.AuthenticationResponse;
 import com.hoang.jwtjava.dto.response.IntrospectResponse;
 import com.hoang.jwtjava.entity.User;
 import com.hoang.jwtjava.exception.AppException;
@@ -17,6 +15,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,24 +45,22 @@ public class AuthenticationService {
     @Value("${jwt.refreshable-duration}")
     private long refreshableDuration;
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public AuthTokens authenticate(AuthenticationRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
             throw new InvalidCredentialsException();
 
-        return AuthenticationResponse.builder()
-                .accessToken(generateAccessToken(user))
-                .refreshToken(generateRefreshToken(user))
-                .authenticated(true)
-                .build();
+        return new AuthTokens(generateAccessToken(user), generateRefreshToken(user));
     }
 
-    public AuthenticationResponse refresh(RefreshTokenRequest request) {
+    public AuthTokens refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank())
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         Claims claims;
         try {
-            claims = getClaims(request.getRefreshToken());
+            claims = getClaims(refreshToken);
         } catch (JwtException e) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
@@ -74,11 +72,7 @@ public class AuthenticationService {
         User user = userRepository.findByEmail(claims.getSubject())
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
-        return AuthenticationResponse.builder()
-                .accessToken(generateAccessToken(user))
-                .refreshToken(generateRefreshToken(user))
-                .authenticated(true)
-                .build();
+        return new AuthTokens(generateAccessToken(user), generateRefreshToken(user));
     }
 
     public IntrospectResponse introspect(IntrospectRequest request) {
@@ -154,5 +148,12 @@ public class AuthenticationService {
         if (user.getRoles() == null || user.getRoles().isEmpty())
             return "";
         return String.join(" ", user.getRoles());
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class AuthTokens {
+        private String accessToken;
+        private String refreshToken;
     }
 }

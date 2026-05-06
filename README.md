@@ -41,13 +41,14 @@ Tag order: **Authentication** first, then Categories, Products, Users. Request b
 
 #### Try on Swagger (typical flow)
 
-1. **Login** — open **Authentication** → `POST /api/v1/auth/login` → **Try it out**. Defaults suggest `admin@gmail.com` / `Admin@123456` (seeded admin). **Execute** → copy `result.accessToken`.
+1. **Login** — open **Authentication** → `POST /api/v1/auth/login` → **Try it out**. Defaults suggest `admin@gmail.com` / `Admin@123456` (seeded admin). **Execute** → copy `result.accessToken` (refresh token is now returned via HttpOnly cookie, not in JSON).
 2. **Authorize** — **Authorize** (lock icon) → scheme **bearer-jwt** → paste **only** the access token (Swagger adds the `Bearer` prefix).
 3. **List products** — **Products** → `GET /api/v1/products` → **Try it out**:
    - Do **not** set `isFeatured=true` if you want *all* products (omit the param when possible).
    - Pagination: `page=0`, `size=20`, `sort=createdAt,desc` (do not use `string` as sort property).
 4. **Create product (ADMIN)** — `POST /api/v1/products`: use the example body (`categoryId` e.g. `1`, image https URL). Requires admin token in **Authorize**.
 5. **Upload images** — `POST /api/v1/products/images`: form field **`files`**, ADMIN only.
+6. **Refresh token** — `POST /api/v1/auth/refresh` has **no request body**; backend reads refresh token from HttpOnly cookie and returns a new access token (+ rotates refresh cookie).
 
 ## Cấu hình & bảo mật
 
@@ -77,6 +78,8 @@ Tham chiếu: `jwtjava/src/main/resources/application-local.example.yaml`.
 ## API tóm tắt
 
 - Auth: `POST /api/v1/auth/register`, `/login`, `/refresh`, `/introspect`
+  - `/login`: trả `accessToken` trong body, set `refresh_token` qua **HttpOnly cookie**.
+  - `/refresh`: **không nhận request body**, chỉ đọc refresh token từ cookie.
 - Sản phẩm (cần JWT; admin cho ghi): `/api/v1/products`
 - Upload ảnh (admin): `POST /api/v1/products/images` (`multipart`, field `files`)
 - Ảnh tĩnh: `GET /files/product-images/...` (public)
@@ -84,6 +87,14 @@ Tham chiếu: `jwtjava/src/main/resources/application-local.example.yaml`.
 ## Frontend (CORS)
 
 Chỉnh `app.cors.allowed-origins` trong `application.yaml` / `application-local.yaml` cho đúng origin SPA (ví dụ `http://localhost:5173`).
+Khi gọi auth từ browser, nhớ bật `credentials` để gửi/nhận cookie:
+
+```js
+fetch("http://localhost:8080/api/v1/auth/refresh", {
+  method: "POST",
+  credentials: "include"
+});
+```
 
 ## Deploy Render
 

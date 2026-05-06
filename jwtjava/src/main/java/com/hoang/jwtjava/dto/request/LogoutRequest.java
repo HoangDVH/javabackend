@@ -8,8 +8,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Schema(description = "Optional refresh token to revoke together with current access token")
+@Schema(description = "Optional fallback refresh token for non-cookie clients. Browser clients should rely on HttpOnly cookie.")
 public class LogoutRequest {
-    @Schema(example = "<refresh_token_from_login>")
+    @Schema(example = "<refresh_token>", description = "Optional fallback token; usually omitted when using cookie-based auth")
     String refreshToken;
 }
