@@ -29,11 +29,12 @@ public class ProductService {
     private final ProductImageStorageService productImageStorageService;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> listProducts(Long categoryId, Long brandId, Boolean isFeatured, Pageable pageable) {
+    public Page<ProductResponse> listProducts(Long categoryId, Long brandId, Boolean isFeatured, String keyword, Pageable pageable) {
         Specification<Product> spec = Specification.allOf(
                 ProductSpecifications.categoryIdEquals(categoryId),
                 ProductSpecifications.brandIdEquals(brandId),
-                ProductSpecifications.isFeaturedEquals(isFeatured)
+                ProductSpecifications.isFeaturedEquals(isFeatured),
+                ProductSpecifications.keywordContains(keyword)
         );
         return productRepository.findAll(spec, pageable).map(productMapper::toResponse);
     }

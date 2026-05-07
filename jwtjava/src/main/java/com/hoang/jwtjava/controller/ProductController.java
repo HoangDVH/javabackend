@@ -66,6 +66,7 @@ public class ProductController {
     @GetMapping
     @Operation(summary = "List products (paginated)", description = """
             **isFeatured:** omit = *all* products. `true` = featured only. `false` = non-featured only.
+            **keyword:** tìm kiếm theo tên/mô tả sản phẩm (không phân biệt hoa thường).
             **Pagination:** use query params `page`, `size`, `sort` (e.g. `sort=createdAt,desc`). Do not use `string` as a sort property.
             """)
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listProducts(
@@ -75,9 +76,11 @@ public class ProductController {
             @RequestParam(required = false) Long brandId,
             @Parameter(description = "Omit = all. `true` = featured only. `false` = non-featured only.")
             @RequestParam(required = false) Boolean isFeatured,
+            @Parameter(description = "Search keyword in product name/description (case-insensitive).")
+            @RequestParam(required = false) String keyword,
             @ParameterObject
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<ProductResponse> page = productService.listProducts(categoryId, brandId, isFeatured, pageable);
+        Page<ProductResponse> page = productService.listProducts(categoryId, brandId, isFeatured, keyword, pageable);
         PageResponse<ProductResponse> body = PageResponse.<ProductResponse>builder()
                 .items(page.getContent())
                 .totalElements(page.getTotalElements())
