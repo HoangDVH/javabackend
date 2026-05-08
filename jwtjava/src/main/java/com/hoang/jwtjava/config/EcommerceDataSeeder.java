@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Seed 6 danh mục (Điện thoại, Áo, Quần, Giày, Laptop, Nón) và 50 sản phẩm mẫu khi DB trống.
+ * Seed 6 danh mục (Điện thoại, Laptop, Tablet, Đồng hồ, Phụ kiện, PC) và 50 sản phẩm mẫu khi DB trống.
  */
 @Component
 @Order(100)
@@ -40,23 +40,58 @@ public class EcommerceDataSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        seedCategoriesIfEmpty();
+        seedOrMigrateCategories();
         seedProductsIfEmpty();
     }
 
-    private void seedCategoriesIfEmpty() {
-        if (categoryRepository.count() > 0)
+    private void seedOrMigrateCategories() {
+        if (categoryRepository.count() == 0) {
+            List<Category> categories = List.of(
+                    Category.builder().code("PHONE").name("Điện thoại").build(),
+                    Category.builder().code("LAPTOP").name("Laptop").build(),
+                    Category.builder().code("TABLET").name("Tablet").build(),
+                    Category.builder().code("WATCH").name("Đồng hồ").build(),
+                    Category.builder().code("ACCESSORY").name("Phụ kiện").build(),
+                    Category.builder().code("PC").name("PC").build()
+            );
+            categoryRepository.saveAll(categories);
+            log.info("Seeded {} product categories", categories.size());
             return;
-        List<Category> categories = List.of(
-                Category.builder().code("PHONE").name("Điện thoại").build(),
-                Category.builder().code("SHIRT").name("Áo").build(),
-                Category.builder().code("PANTS").name("Quần").build(),
-                Category.builder().code("SHOES").name("Giày").build(),
-                Category.builder().code("LAPTOP").name("Laptop").build(),
-                Category.builder().code("HAT").name("Nón").build()
-        );
-        categoryRepository.saveAll(categories);
-        log.info("Seeded {} product categories", categories.size());
+        }
+
+        // Migrate các code cũ sang bộ danh mục mới để API category luôn trả đúng yêu cầu.
+        List<Category> all = categoryRepository.findAll();
+        Map<String, Category> byCode = new LinkedHashMap<>();
+        for (Category c : all) {
+            if (c.getCode() == null)
+                continue;
+            byCode.put(c.getCode().trim().toUpperCase(), c);
+        }
+        normalizeCategoryName(byCode, "PHONE", "Điện thoại");
+        normalizeCategoryName(byCode, "LAPTOP", "Laptop");
+        migrateLegacyCode(byCode, "SHIRT", "TABLET", "Tablet");
+        migrateLegacyCode(byCode, "PANTS", "WATCH", "Đồng hồ");
+        migrateLegacyCode(byCode, "SHOES", "ACCESSORY", "Phụ kiện");
+        migrateLegacyCode(byCode, "HAT", "PC", "PC");
+    }
+
+    private void normalizeCategoryName(Map<String, Category> byCode, String code, String name) {
+        Category c = byCode.get(code);
+        if (c != null)
+            c.setName(name);
+    }
+
+    private void migrateLegacyCode(Map<String, Category> byCode, String oldCode, String newCode, String newName) {
+        Category target = byCode.get(newCode);
+        Category legacy = byCode.get(oldCode);
+        if (target != null) {
+            target.setName(newName);
+            return;
+        }
+        if (legacy != null) {
+            legacy.setCode(newCode);
+            legacy.setName(newName);
+        }
     }
 
     private void seedProductsIfEmpty() {
@@ -71,11 +106,11 @@ public class EcommerceDataSeeder implements ApplicationRunner {
 
         List<Product> products = new ArrayList<>();
         products.addAll(buildPhones(byCode.get("PHONE")));
-        products.addAll(buildShirts(byCode.get("SHIRT")));
-        products.addAll(buildPants(byCode.get("PANTS")));
-        products.addAll(buildShoes(byCode.get("SHOES")));
         products.addAll(buildLaptops(byCode.get("LAPTOP")));
-        products.addAll(buildHats(byCode.get("HAT")));
+        products.addAll(buildShirts(byCode.get("TABLET")));
+        products.addAll(buildPants(byCode.get("WATCH")));
+        products.addAll(buildShoes(byCode.get("ACCESSORY")));
+        products.addAll(buildHats(byCode.get("PC")));
 
         if (seedImagesFromNetwork) {
             for (Product p : products) {
