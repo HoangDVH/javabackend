@@ -70,20 +70,55 @@ public class ProductImageStorageService {
     }
 
     /**
-     * Với mỗi chuỗi: nếu là URL http(s) thì tải về và trả về URL lưu trữ; ngược lại giữ nguyên (đã là path DB hoặc dữ liệu cũ).
+     * Với mỗi chuỗi:
+     * - Khi Cloudinary bật: giữ nguyên URL http(s) để tránh kéo ảnh cloud về local storage.
+     * - Khi Cloudinary tắt: URL http(s) sẽ được tải về local storage như trước.
+     * - Các giá trị không phải URL http(s) được giữ nguyên (path DB hoặc dữ liệu cũ).
      */
     public List<String> resolveImageUrlsForPersistence(List<String> inputs) {
         if (inputs == null || inputs.isEmpty())
             return List.of();
+        CloudinaryUploadService cloudinary = cloudinaryUploadService.getIfAvailable();
+        boolean cloudinaryEnabled = cloudinary != null;
         List<String> out = new ArrayList<>(inputs.size());
         for (String raw : inputs) {
             if (raw == null || raw.isBlank())
                 continue;
             String s = raw.trim();
-            if (isHttpUrl(s))
-                out.add(downloadAndStore(s));
-            else
+            if (isHttpUrl(s)) {
+                if (cloudinaryEnabled)
+                    out.add(s);
+                else
+                    out.add(downloadAndStore(s));
+            } else
                 out.add(s);
+        }
+        return out;
+    }
+
+    /**
+     * Import danh sách URL http(s) vào storage quản lý:
+     * - Cloudinary bật: upload remote URL lên Cloudinary và trả secure_url.
+     * - Cloudinary tắt: tải về local storage như luồng cũ.
+     * Các giá trị không phải http(s) được giữ nguyên.
+     */
+    public List<String> importHttpImageUrlsToManagedStorage(List<String> inputs) {
+        if (inputs == null || inputs.isEmpty())
+            return List.of();
+        CloudinaryUploadService cloudinary = cloudinaryUploadService.getIfAvailable();
+        List<String> out = new ArrayList<>(inputs.size());
+        for (String raw : inputs) {
+            if (raw == null || raw.isBlank())
+                continue;
+            String s = raw.trim();
+            if (!isHttpUrl(s)) {
+                out.add(s);
+                continue;
+            }
+            if (cloudinary != null)
+                out.add(cloudinary.uploadImageFromUrl(s));
+            else
+                out.add(downloadAndStore(s));
         }
         return out;
     }

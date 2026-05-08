@@ -49,6 +49,8 @@ app:
       - http://localhost:3000
   # Khi seed/backfill sản phẩm mẫu: true = tải ảnh từ mạng vào storage; false = chỉ lưu URL Picsum (dùng cho test).
   seed-images-from-network: true
+  # Khi startup: thay ảnh local cũ (/files/product-images/...) bằng ảnh managed mới để tránh mất ảnh sau redeploy.
+  migrate-legacy-local-images-on-startup: true
   seed-admin:
     email: ${APP_SEED_ADMIN_EMAIL:admin@gmail.com}
     password: ${APP_SEED_ADMIN_PASSWORD:Admin@123456}

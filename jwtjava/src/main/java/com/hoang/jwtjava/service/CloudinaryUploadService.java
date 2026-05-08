@@ -71,6 +71,37 @@ public class CloudinaryUploadService {
         return urls;
     }
 
+    public String uploadImageFromUrl(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl))
+            throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);
+        String source = imageUrl.trim();
+        if (!source.startsWith("http://") && !source.startsWith("https://"))
+            throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);
+
+        String publicId = UUID.randomUUID().toString().replace("-", "");
+        Map<String, Object> options = new HashMap<>();
+        options.put("resource_type", "image");
+        options.put("public_id", publicId);
+        String folder = blankToNullOrTrim(cloudinaryProperties.getFolder());
+        if (StringUtils.hasText(folder))
+            options.put("folder", folder);
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = cloudinary.uploader().upload(source, options);
+            String secureUrl = result != null ? (String) result.get("secure_url") : null;
+            if (!StringUtils.hasText(secureUrl))
+                throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);
+            return secureUrl;
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);
+        }
+    }
+
     private String uploadOne(MultipartFile file) {
         if (file.getSize() > storageProperties.getMaxBytes())
             throw new AppException(ErrorCode.IMAGE_IMPORT_FAILED);

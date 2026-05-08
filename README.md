@@ -87,6 +87,7 @@ Tham chiếu: `jwtjava/src/main/resources/application-local.example.yaml`.
 - Sản phẩm (cần JWT; admin cho ghi): `/api/v1/products`
 - Upload ảnh (seller/admin): `POST /api/v1/products/images` (`multipart`, field `files`) — bật Cloudinary (`CLOUDINARY_ENABLED=true` + đủ key) thì response là URL Cloudinary; tắt thì vẫn lưu local `/files/...`
 - Ảnh tĩnh: `GET /files/product-images/...` (public)
+- Startup backfill: nếu ảnh cũ dạng local path `/files/product-images/...`, app sẽ tự thay sang ảnh managed mới (ưu tiên Cloudinary khi bật) để tránh mất ảnh sau lần redeploy trước.
 
 ## Frontend (CORS)
 
@@ -110,6 +111,8 @@ fetch("http://localhost:8080/api/v1/auth/refresh", {
    - `DATABASE_URL` (từ Neon/Supabase)
    - `JWT_SIGNER_KEY` (Base64 256-bit)
    - `APP_SEED_ADMIN_PASSWORD`
+   - `CLOUDINARY_ENABLED=true`
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (để ảnh sản phẩm không mất sau redeploy)
 6. App tự đọc `DATABASE_URL` và convert sang JDBC PostgreSQL khi khởi động.
 7. SPA dev tại `http://localhost:5173` gọi API **HTTPS** Render (khác site): `render.yaml` đã set `JWT_REFRESH_COOKIE_SAME_SITE=None` và `JWT_REFRESH_COOKIE_SECURE=true`. Nếu chỉnh tay trên dashboard Render, giữ cùng hai biến đó; không dùng `Lax`/`secure=false` cho tình huống này.
 

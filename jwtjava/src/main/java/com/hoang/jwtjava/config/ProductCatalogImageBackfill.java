@@ -26,6 +26,8 @@ public class ProductCatalogImageBackfill implements ApplicationRunner {
 
     @Value("${app.seed-images-from-network:true}")
     private boolean seedImagesFromNetwork;
+    @Value("${app.migrate-legacy-local-images-on-startup:true}")
+    private boolean migrateLegacyLocalImagesOnStartup;
 
     private final ProductRepository productRepository;
     private final ProductImageStorageService productImageStorageService;
@@ -48,7 +50,7 @@ public class ProductCatalogImageBackfill implements ApplicationRunner {
                     "https://picsum.photos/seed/" + base + "-b/640/640.jpg"
             );
             try {
-                p.setImages(productImageStorageService.resolveImageUrlsForPersistence(src));
+                p.setImages(productImageStorageService.importHttpImageUrlsToManagedStorage(src));
                 productRepository.save(p);
                 fixed++;
             } catch (Exception e) {
@@ -59,7 +61,7 @@ public class ProductCatalogImageBackfill implements ApplicationRunner {
             log.info("Đã gán ảnh lưu storage cho {} sản phẩm (trước đó catalog/trống).", fixed);
     }
 
-    private static boolean needsImageFix(Product p) {
+    private boolean needsImageFix(Product p) {
         List<String> imgs = p.getImages();
         if (imgs == null || imgs.isEmpty())
             return true;
@@ -68,7 +70,20 @@ public class ProductCatalogImageBackfill implements ApplicationRunner {
                 return true;
             if (u.contains("catalog/"))
                 return true;
+            if (isLegacyLocalImage(u))
+                return true;
         }
         return false;
+    }
+
+    private boolean isLegacyLocalImage(String u) {
+        if (!migrateLegacyLocalImagesOnStartup)
+            return false;
+        String s = u.trim();
+        if (s.isBlank())
+            return true;
+        return s.startsWith("/files/product-images/")
+                || s.contains("/files/product-images/")
+                || s.startsWith("files/product-images/");
     }
 }
