@@ -1,13 +1,10 @@
 package com.hoang.jwtjava.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoang.jwtjava.dto.request.ProductCreateRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.PageResponse;
 import com.hoang.jwtjava.dto.response.ProductImageUploadResponse;
 import com.hoang.jwtjava.dto.response.ProductResponse;
-import com.hoang.jwtjava.exception.AppException;
-import com.hoang.jwtjava.exception.ErrorCode;
 import com.hoang.jwtjava.service.ProductImageStorageService;
 import com.hoang.jwtjava.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,9 +13,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -37,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 @Tag(name = "Products")
 @RestController
@@ -47,8 +41,6 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductImageStorageService productImageStorageService;
-    private final ObjectMapper objectMapper;
-    private final Validator validator;
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload product images", description =
@@ -136,19 +128,17 @@ public class ProductController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create product with images (single request)",
-            description = "Gửi kèm JSON + ảnh multipart trong 1 request. Field `product` là JSON của ProductCreateRequest; field `files` là 1-n ảnh.")
+            description = "Nhập các field sản phẩm trực tiếp theo form-data và gửi 1-n ảnh ở field `files`.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> createProductWithImages(
             @AuthenticationPrincipal Jwt jwt,
-            @Parameter(description = "JSON ProductCreateRequest")
-            @RequestPart("product") String productJson,
+            @Valid @ModelAttribute ProductCreateRequest request,
             @Parameter(
                     description = "Một hoặc nhiều file ảnh (multipart).",
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
-            @RequestPart(value = "files", required = false) MultipartFile[] files) {
-        ProductCreateRequest request = parseProductPart(productJson);
+            @RequestParam(value = "files", required = false) MultipartFile[] files) {
         List<String> merged = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
         List<String> uploaded = saveUploadedFilesIfAny(files);
         merged.addAll(uploaded);
@@ -178,20 +168,18 @@ public class ProductController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update product with images (single request)",
-            description = "Gửi kèm JSON + ảnh multipart trong 1 request. Field `product` là JSON của ProductCreateRequest; field `files` là 1-n ảnh (tuỳ chọn).")
+            description = "Nhập các field sản phẩm trực tiếp theo form-data và gửi 1-n ảnh ở field `files` (tuỳ chọn).")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProductWithImages(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id,
-            @Parameter(description = "JSON ProductCreateRequest")
-            @RequestPart("product") String productJson,
+            @Valid @ModelAttribute ProductCreateRequest request,
             @Parameter(
                     description = "Một hoặc nhiều file ảnh (multipart).",
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
-            @RequestPart(value = "files", required = false) MultipartFile[] files) {
-        ProductCreateRequest request = parseProductPart(productJson);
+            @RequestParam(value = "files", required = false) MultipartFile[] files) {
         List<String> merged = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
         List<String> uploaded = saveUploadedFilesIfAny(files);
         merged.addAll(uploaded);
@@ -241,19 +229,5 @@ public class ProductController {
         if (!anyNonEmpty)
             return List.of();
         return productImageStorageService.saveUploadedFiles(list);
-    }
-
-    private ProductCreateRequest parseProductPart(String productJson) {
-        if (productJson == null || productJson.isBlank())
-            throw new AppException(ErrorCode.INVALID_KEY);
-        try {
-            ProductCreateRequest request = objectMapper.readValue(productJson, ProductCreateRequest.class);
-            Set<ConstraintViolation<ProductCreateRequest>> violations = validator.validate(request);
-            if (!violations.isEmpty())
-                throw new AppException(ErrorCode.INVALID_KEY);
-            return request;
-        } catch (Exception e) {
-            throw new AppException(ErrorCode.INVALID_KEY);
-        }
     }
 }
