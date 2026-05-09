@@ -138,7 +138,7 @@ public class ProductController {
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
-            @RequestParam(value = "files", required = false) MultipartFile[] files) {
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
         List<String> merged = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
         List<String> uploaded = saveUploadedFilesIfAny(files);
         merged.addAll(uploaded);
@@ -179,7 +179,7 @@ public class ProductController {
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
-            @RequestParam(value = "files", required = false) MultipartFile[] files) {
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
         List<String> merged = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
         List<String> uploaded = saveUploadedFilesIfAny(files);
         merged.addAll(uploaded);
