@@ -17,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -29,12 +30,27 @@ public class ProductService {
     private final ProductImageStorageService productImageStorageService;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> listProducts(Long categoryId, Long brandId, Boolean isFeatured, String keyword, Pageable pageable) {
+    public Page<ProductResponse> listProducts(
+            Long categoryId,
+            Long brandId,
+            Boolean isFeatured,
+            String keyword,
+            Integer minPrice,
+            Integer maxPrice,
+            BigDecimal minRating,
+            Boolean hasDiscount,
+            Boolean inStock,
+            Pageable pageable) {
         Specification<Product> spec = Specification.allOf(
                 ProductSpecifications.categoryIdEquals(categoryId),
                 ProductSpecifications.brandIdEquals(brandId),
                 ProductSpecifications.isFeaturedEquals(isFeatured),
-                ProductSpecifications.keywordContains(keyword)
+                ProductSpecifications.keywordContains(keyword),
+                ProductSpecifications.priceGte(minPrice),
+                ProductSpecifications.priceLte(maxPrice),
+                ProductSpecifications.ratingGte(minRating),
+                ProductSpecifications.hasDiscount(hasDiscount),
+                ProductSpecifications.inStock(inStock)
         );
         return productRepository.findAll(spec, pageable).map(productMapper::toResponse);
     }

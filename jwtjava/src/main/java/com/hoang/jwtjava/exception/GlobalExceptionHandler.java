@@ -6,6 +6,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -63,22 +66,40 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<Void>> handlingValidation(MethodArgumentNotValidException exception) {
-        String enumKey = exception.getFieldError() != null
-                ? exception.getFieldError().getDefaultMessage()
-                : ErrorCode.INVALID_KEY.name();
+        return buildValidationResponse(exception.getBindingResult());
+    }
 
+    @ExceptionHandler(BindException.class)
+    ResponseEntity<ApiResponse<Void>> handlingBindException(BindException exception) {
+        return buildValidationResponse(exception.getBindingResult());
+    }
+
+    private ResponseEntity<ApiResponse<Void>> buildValidationResponse(BindingResult bindingResult) {
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
-        try {
-            errorCode = ErrorCode.valueOf(enumKey);
-        } catch (IllegalArgumentException ignored) {
-        }
-
+        FieldError fieldError = bindingResult != null ? bindingResult.getFieldError() : null;
+        String message = fieldErrorMessage(fieldError);
         return ResponseEntity
                 .status(errorCode.getHttpStatusCode())
                 .body(ApiResponse.<Void>builder()
                         .code(errorCode.getCode())
-                        .message(errorCode.getMessage())
+                        .message(message)
                         .build());
+    }
+
+    private String fieldErrorMessage(FieldError fieldError) {
+        if (fieldError == null)
+            return ErrorCode.INVALID_KEY.getMessage();
+        String field = fieldError.getField();
+        String code = fieldError.getCode() == null ? "" : fieldError.getCode();
+        return switch (code) {
+            case "NotNull", "NotBlank", "NotEmpty" -> field + " is required";
+            case "Positive" -> field + " must be greater than 0";
+            case "PositiveOrZero" -> field + " must be greater than or equal to 0";
+            case "DecimalMin" -> field + " is below minimum value";
+            case "DecimalMax" -> field + " exceeds maximum value";
+            case "Size" -> field + " length is out of allowed range";
+            default -> field + " is invalid";
+        };
     }
 
     @ExceptionHandler(DataAccessException.class)

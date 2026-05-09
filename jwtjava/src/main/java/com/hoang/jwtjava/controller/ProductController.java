@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -68,6 +69,7 @@ public class ProductController {
     @Operation(summary = "List products (paginated)", description = """
             **isFeatured:** omit = *all* products. `true` = featured only. `false` = non-featured only.
             **keyword:** tìm kiếm theo tên/mô tả sản phẩm (không phân biệt hoa thường).
+            **Advanced filters:** minPrice, maxPrice, minRating, hasDiscount, inStock.
             **Pagination:** use query params `page`, `size`, `sort` (e.g. `sort=createdAt,desc`). Do not use `string` as a sort property.
             """)
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listProducts(
@@ -79,9 +81,29 @@ public class ProductController {
             @RequestParam(required = false) Boolean isFeatured,
             @Parameter(description = "Search keyword in product name/description (case-insensitive).")
             @RequestParam(required = false) String keyword,
+            @Parameter(description = "Min product price (inclusive).")
+            @RequestParam(required = false) Integer minPrice,
+            @Parameter(description = "Max product price (inclusive).")
+            @RequestParam(required = false) Integer maxPrice,
+            @Parameter(description = "Min product rating (inclusive).")
+            @RequestParam(required = false) BigDecimal minRating,
+            @Parameter(description = "true = discountPrice < price; false = no discount.")
+            @RequestParam(required = false) Boolean hasDiscount,
+            @Parameter(description = "true = stock > 0; false = stock <= 0.")
+            @RequestParam(required = false) Boolean inStock,
             @ParameterObject
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<ProductResponse> page = productService.listProducts(categoryId, brandId, isFeatured, keyword, pageable);
+        Page<ProductResponse> page = productService.listProducts(
+                categoryId,
+                brandId,
+                isFeatured,
+                keyword,
+                minPrice,
+                maxPrice,
+                minRating,
+                hasDiscount,
+                inStock,
+                pageable);
         PageResponse<ProductResponse> body = PageResponse.<ProductResponse>builder()
                 .items(page.getContent())
                 .totalElements(page.getTotalElements())
