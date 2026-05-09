@@ -47,6 +47,7 @@ app:
     allowed-origins:
       - http://localhost:5173
       - http://localhost:3000
+      - https://easy-mart-vert.vercel.app
   # Khi seed/backfill sản phẩm mẫu: true = tải ảnh từ mạng vào storage; false = chỉ lưu URL Picsum (dùng cho test).
   seed-images-from-network: true
   # Khi startup: thay ảnh local cũ (/files/product-images/...) bằng ảnh managed mới để tránh mất ảnh sau redeploy.

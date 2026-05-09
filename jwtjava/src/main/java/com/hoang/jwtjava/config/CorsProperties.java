@@ -20,6 +20,7 @@ public class CorsProperties {
 
     List<String> allowedOrigins = new ArrayList<>(List.of(
             "http://localhost:5173",
-            "http://localhost:3000"
+            "http://localhost:3000",
+            "https://easy-mart-vert.vercel.app"
     ));
 }
