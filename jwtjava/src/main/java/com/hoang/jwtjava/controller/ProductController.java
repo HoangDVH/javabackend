@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -111,7 +112,7 @@ public class ProductController {
                 .build());
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
             @AuthenticationPrincipal Jwt jwt,
@@ -125,12 +126,67 @@ public class ProductController {
                         .build());
     }
 
-    @PutMapping("/{id}")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Create product with images (single request)",
+            description = "Gửi kèm JSON + ảnh multipart trong 1 request. Field `product` là JSON của ProductCreateRequest; field `files` là 1-n ảnh.")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    public ResponseEntity<ApiResponse<ProductResponse>> createProductWithImages(
+            @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "JSON ProductCreateRequest")
+            @RequestPart("product") @Valid ProductCreateRequest request,
+            @Parameter(
+                    description = "Một hoặc nhiều file ảnh (multipart).",
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+        List<String> merged = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
+        List<String> uploaded = saveUploadedFilesIfAny(files);
+        merged.addAll(uploaded);
+        request.setImages(merged);
+
+        boolean isAdmin = hasRole(jwt, "ADMIN");
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.<ProductResponse>builder()
+                        .message("Product created successfully")
+                        .result(productService.createProduct(request, jwt.getSubject(), isAdmin))
+                        .build());
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id,
             @RequestBody @Valid ProductCreateRequest request) {
+        boolean isAdmin = hasRole(jwt, "ADMIN");
+        return ResponseEntity.ok(ApiResponse.<ProductResponse>builder()
+                .message("Product updated successfully")
+                .result(productService.updateProduct(id, request, jwt.getSubject(), isAdmin))
+                .build());
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Update product with images (single request)",
+            description = "Gửi kèm JSON + ảnh multipart trong 1 request. Field `product` là JSON của ProductCreateRequest; field `files` là 1-n ảnh (tuỳ chọn).")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    public ResponseEntity<ApiResponse<ProductResponse>> updateProductWithImages(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @Parameter(description = "JSON ProductCreateRequest")
+            @RequestPart("product") @Valid ProductCreateRequest request,
+            @Parameter(
+                    description = "Một hoặc nhiều file ảnh (multipart).",
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+        List<String> merged = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
+        List<String> uploaded = saveUploadedFilesIfAny(files);
+        merged.addAll(uploaded);
+        request.setImages(merged);
+
         boolean isAdmin = hasRole(jwt, "ADMIN");
         return ResponseEntity.ok(ApiResponse.<ProductResponse>builder()
                 .message("Product updated successfully")
@@ -159,5 +215,21 @@ public class ProductController {
                 return true;
         }
         return false;
+    }
+
+    private List<String> saveUploadedFilesIfAny(MultipartFile[] files) {
+        if (files == null || files.length == 0)
+            return List.of();
+        List<MultipartFile> list = Arrays.asList(files);
+        boolean anyNonEmpty = false;
+        for (MultipartFile f : list) {
+            if (f != null && !f.isEmpty()) {
+                anyNonEmpty = true;
+                break;
+            }
+        }
+        if (!anyNonEmpty)
+            return List.of();
+        return productImageStorageService.saveUploadedFiles(list);
     }
 }

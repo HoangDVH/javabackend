@@ -48,6 +48,12 @@ Tag order: **Authentication** first, then Categories, Products, Users. Request b
    - Pagination: `page=0`, `size=20`, `sort=createdAt,desc` (do not use `string` as sort property).
 4. **Create product (ADMIN)** — `POST /api/v1/products`: use the example body (`categoryId` e.g. `1`, image https URL). Requires admin token in **Authorize**.
 5. **Upload images** — `POST /api/v1/products/images`: form field **`files`**, ADMIN only.
+6. **Create product + upload images (1 request)** — `POST /api/v1/products` với `multipart/form-data`:
+   - part **`product`**: JSON của `ProductCreateRequest`
+   - part **`files`**: 1-n file ảnh (tuỳ chọn). Backend sẽ tự upload/lưu và gộp URL vào `images`.
+7. **Update product + upload images (1 request)** — `PUT /api/v1/products/{id}` với `multipart/form-data`:
+   - part **`product`**: JSON của `ProductCreateRequest`
+   - part **`files`**: 1-n file ảnh (tuỳ chọn). Backend sẽ tự upload/lưu và gộp URL vào `images`.
 6. **Refresh token** — `POST /api/v1/auth/refresh` has **no request body**; backend reads refresh token from HttpOnly cookie and returns a new access token (+ rotates refresh cookie).
 
 ## Cấu hình & bảo mật
