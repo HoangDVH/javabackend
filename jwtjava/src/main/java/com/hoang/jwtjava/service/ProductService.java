@@ -1,6 +1,7 @@
 package com.hoang.jwtjava.service;
 
 import com.hoang.jwtjava.dto.request.ProductCreateRequest;
+import com.hoang.jwtjava.dto.response.PageResponse;
 import com.hoang.jwtjava.dto.response.ProductResponse;
 import com.hoang.jwtjava.entity.Product;
 import com.hoang.jwtjava.exception.AppException;
@@ -12,6 +13,7 @@ import com.hoang.jwtjava.repository.ProductRepository;
 import com.hoang.jwtjava.repository.ProductSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final CategoryRepository categoryRepository;
     private final ProductImageStorageService productImageStorageService;
+    private final CatalogCacheService catalogCacheService;
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> listProducts(
@@ -41,6 +44,16 @@ public class ProductService {
             Boolean hasDiscount,
             Boolean inStock,
             Pageable pageable) {
+        if (catalogCacheService.isActive()) {
+            var cached = catalogCacheService.getProductList(
+                    categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating, hasDiscount,
+                    inStock, pageable);
+            if (cached.isPresent()) {
+                PageResponse<ProductResponse> pageResponse = cached.get();
+                return new PageImpl<>(pageResponse.getItems(), pageable, pageResponse.getTotalElements());
+            }
+        }
+
         Specification<Product> spec = Specification.allOf(
                 ProductSpecifications.categoryIdEquals(categoryId),
                 ProductSpecifications.brandIdEquals(brandId),
@@ -52,15 +65,38 @@ public class ProductService {
                 ProductSpecifications.hasDiscount(hasDiscount),
                 ProductSpecifications.inStock(inStock)
         );
-        return productRepository.findAll(spec, pageable).map(productMapper::toResponse);
+        Page<ProductResponse> page = productRepository.findAll(spec, pageable).map(productMapper::toResponse);
+
+        if (catalogCacheService.isActive()) {
+            catalogCacheService.putProductList(
+                    categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating, hasDiscount,
+                    inStock, pageable,
+                    PageResponse.<ProductResponse>builder()
+                            .items(page.getContent())
+                            .totalElements(page.getTotalElements())
+                            .totalPages(page.getTotalPages())
+                            .page(page.getNumber())
+                            .size(page.getSize())
+                            .build());
+        }
+        return page;
     }
 
     @Transactional(readOnly = true)
     public ProductResponse getProduct(Long id) {
-        return productMapper.toResponse(
+        if (catalogCacheService.isActive()) {
+            var cached = catalogCacheService.getProduct(id);
+            if (cached.isPresent())
+                return cached.get();
+        }
+
+        ProductResponse response = productMapper.toResponse(
                 productRepository.findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND))
         );
+        if (catalogCacheService.isActive())
+            catalogCacheService.putProduct(id, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +114,9 @@ public class ProductService {
         if (!isAdmin)
             product.setSellerEmail(actorEmail);
         product.setImages(productImageStorageService.resolveImageUrlsForPersistence(request.getImages()));
-        return productMapper.toResponse(productRepository.save(product));
+        ProductResponse response = productMapper.toResponse(productRepository.save(product));
+        catalogCacheService.invalidateProducts();
+        return response;
     }
 
     @Transactional
@@ -92,7 +130,9 @@ public class ProductService {
         if (!isAdmin && product.getSellerEmail() == null)
             product.setSellerEmail(actorEmail);
         product.setImages(productImageStorageService.resolveImageUrlsForPersistence(request.getImages()));
-        return productMapper.toResponse(productRepository.save(product));
+        ProductResponse response = productMapper.toResponse(productRepository.save(product));
+        catalogCacheService.invalidateProducts();
+        return response;
     }
 
     @Transactional
@@ -102,6 +142,7 @@ public class ProductService {
         if (!canManageProduct(product, actorEmail, isAdmin))
             throw new AppException(ErrorCode.UNAUTHORIZED);
         productRepository.deleteById(id);
+        catalogCacheService.invalidateProducts();
     }
 
     private Category resolveCategory(Long categoryId) {

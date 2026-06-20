@@ -1,6 +1,7 @@
 package com.hoang.jwtjava;
 
 import com.hoang.jwtjava.config.AppRedisProperties;
+import com.hoang.jwtjava.config.CatalogCacheProperties;
 import com.hoang.jwtjava.config.CloudinaryProperties;
 import com.hoang.jwtjava.config.CorsProperties;
 import com.hoang.jwtjava.config.RateLimitProperties;
@@ -20,6 +21,7 @@ import java.net.URISyntaxException;
         CorsProperties.class,
         CloudinaryProperties.class,
         AppRedisProperties.class,
+        CatalogCacheProperties.class,
         RateLimitProperties.class
 })
 @OpenAPIDefinition(tags = {

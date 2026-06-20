@@ -17,20 +17,39 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CatalogCacheService catalogCacheService;
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> listCategories() {
-        return categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+        if (catalogCacheService.isActive()) {
+            var cached = catalogCacheService.getCategoryList();
+            if (cached.isPresent())
+                return cached.get();
+        }
+
+        List<CategoryResponse> categories = categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
                 .map(this::toResponse)
                 .toList();
+        if (catalogCacheService.isActive())
+            catalogCacheService.putCategoryList(categories);
+        return categories;
     }
 
     @Transactional(readOnly = true)
     public CategoryResponse getCategory(Long id) {
-        return toResponse(
+        if (catalogCacheService.isActive()) {
+            var cached = catalogCacheService.getCategory(id);
+            if (cached.isPresent())
+                return cached.get();
+        }
+
+        CategoryResponse response = toResponse(
                 categoryRepository.findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
         );
+        if (catalogCacheService.isActive())
+            catalogCacheService.putCategory(id, response);
+        return response;
     }
 
     @Transactional(readOnly = true)

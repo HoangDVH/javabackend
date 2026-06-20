@@ -81,6 +81,13 @@ app:
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:}
     blacklist-fail-open: ${REDIS_BLACKLIST_FAIL_OPEN:true}
+  cache:
+    catalog:
+      enabled: ${CATALOG_CACHE_ENABLED:true}
+      product-list-ttl-seconds: 120
+      product-detail-ttl-seconds: 120
+      category-list-ttl-seconds: 1800
+      category-detail-ttl-seconds: 1800
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     login:
