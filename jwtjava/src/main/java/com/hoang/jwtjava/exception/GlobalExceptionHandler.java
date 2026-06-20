@@ -31,6 +31,18 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    ResponseEntity<ApiResponse<Void>> handlingRateLimit(RateLimitExceededException exception) {
+        ErrorCode errorCode = ErrorCode.TOO_MANY_REQUESTS;
+        return ResponseEntity
+                .status(errorCode.getHttpStatusCode())
+                .header("Retry-After", String.valueOf(exception.getRetryAfterSeconds()))
+                .body(ApiResponse.<Void>builder()
+                        .code(errorCode.getCode())
+                        .message(exception.getMessage())
+                        .build());
+    }
+
     @ExceptionHandler(AppException.class)
     ResponseEntity<ApiResponse<Void>> handlingAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();

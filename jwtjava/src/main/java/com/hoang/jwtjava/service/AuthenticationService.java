@@ -1,5 +1,6 @@
 package com.hoang.jwtjava.service;
 
+import com.hoang.jwtjava.config.RateLimitProperties;
 import com.hoang.jwtjava.dto.request.AuthenticationRequest;
 import com.hoang.jwtjava.dto.request.IntrospectRequest;
 import com.hoang.jwtjava.dto.response.IntrospectResponse;
@@ -7,6 +8,7 @@ import com.hoang.jwtjava.entity.User;
 import com.hoang.jwtjava.exception.AppException;
 import com.hoang.jwtjava.exception.ErrorCode;
 import com.hoang.jwtjava.exception.InvalidCredentialsException;
+import com.hoang.jwtjava.exception.RateLimitExceededException;
 import com.hoang.jwtjava.repository.UserRepository;
 import com.hoang.jwtjava.security.JwtTokenKind;
 import io.jsonwebtoken.Claims;
@@ -35,6 +37,8 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenRevocationService tokenRevocationService;
+    private final RateLimitService rateLimitService;
+    private final RateLimitProperties rateLimitProperties;
 
     @Value("${jwt.signer-key}")
     private String signerKey;
@@ -46,6 +50,8 @@ public class AuthenticationService {
     private long refreshableDuration;
 
     public AuthTokens authenticate(AuthenticationRequest request) {
+        enforceLoginEmailRateLimit(request.getEmail());
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
@@ -148,6 +154,17 @@ public class AuthenticationService {
         if (user.getRoles() == null || user.getRoles().isEmpty())
             return "";
         return String.join(" ", user.getRoles());
+    }
+
+    private void enforceLoginEmailRateLimit(String email) {
+        if (email == null || email.isBlank())
+            return;
+        var decision = rateLimitService.check(
+                "login-email",
+                email.trim().toLowerCase(),
+                rateLimitProperties.getLoginByEmail());
+        if (!decision.allowed())
+            throw new RateLimitExceededException(decision.retryAfterSeconds());
     }
 
     @Getter

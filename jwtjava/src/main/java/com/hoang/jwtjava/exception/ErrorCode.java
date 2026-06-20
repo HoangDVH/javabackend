@@ -25,6 +25,7 @@ public enum ErrorCode {
     ORDER_ITEM_INVALID(1014, "Order items are invalid", HttpStatus.BAD_REQUEST),
     OUT_OF_STOCK(1015, "Product is out of stock", HttpStatus.BAD_REQUEST),
     PAYMENT_INVALID(1016, "Payment request is invalid", HttpStatus.BAD_REQUEST),
+    TOO_MANY_REQUESTS(1017, "Too many requests", HttpStatus.TOO_MANY_REQUESTS),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode httpStatusCode) {

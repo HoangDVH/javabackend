@@ -1,5 +1,6 @@
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 # Swagger UI: /swagger-ui.html  |  OpenAPI: /v3/api-docs
 # Disable in production: springdoc.swagger-ui.enabled=false
@@ -12,6 +13,10 @@ springdoc:
 spring:
   config:
     import: optional:classpath:application-local.yaml
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   servlet:
     multipart:
       max-file-size: 5MB
@@ -70,3 +75,23 @@ app:
     api-key: ${CLOUDINARY_API_KEY:}
     api-secret: ${CLOUDINARY_API_SECRET:}
     folder: jwtjava/products
+  redis:
+    enabled: ${REDIS_ENABLED:false}
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    blacklist-fail-open: ${REDIS_BLACKLIST_FAIL_OPEN:true}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    login:
+      max-requests: 10
+      window-seconds: 60
+    login-by-email:
+      max-requests: 5
+      window-seconds: 60
+    refresh:
+      max-requests: 20
+      window-seconds: 60
+    register:
+      max-requests: 5
+      window-seconds: 300
