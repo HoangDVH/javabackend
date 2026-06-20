@@ -13,6 +13,7 @@ import com.hoang.jwtjava.service.AuthenticationService.AuthTokens;
 import com.hoang.jwtjava.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,10 @@ public class AuthenticationController {
      * POST /api/v1/auth/register — public user registration.
      */
     @PostMapping("/register")
+    @SecurityRequirements
+    @Operation(
+            summary = "Register new user",
+            description = "Public. Rate limit Redis: 5 req / 5 phút theo IP.")
     public ResponseEntity<ApiResponse<UserResponse>> register(@RequestBody @Valid UserCreationRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -72,6 +77,13 @@ public class AuthenticationController {
      * POST /api/v1/auth/login — returns access token and sets refresh token cookie.
      */
     @PostMapping("/login")
+    @SecurityRequirements
+    @Operation(
+            summary = "Login",
+            description = """
+                    Public. Trả access token JSON; set HttpOnly cookie `refresh_token`.
+                    Rate limit Redis: 10 req/phút theo IP, 5 req/phút theo email.
+                    """)
     public ResponseEntity<ApiResponse<AuthenticationResponse>> login(@RequestBody @Valid AuthenticationRequest request) {
         AuthTokens tokens = authenticationService.authenticate(request);
         ResponseCookie refreshCookie = buildRefreshCookie(tokens.getRefreshToken());
@@ -92,6 +104,8 @@ public class AuthenticationController {
      * POST /api/v1/auth/introspect — validate an access token.
      */
     @PostMapping("/introspect")
+    @SecurityRequirements
+    @Operation(summary = "Introspect access token", description = "Public. Kiểm tra token còn hợp lệ (kể cả blacklist Redis/DB).")
     public ResponseEntity<ApiResponse<IntrospectResponse>> introspect(@RequestBody IntrospectRequest request) {
         return ResponseEntity.ok(ApiResponse.<IntrospectResponse>builder()
                 .result(authenticationService.introspect(request))
@@ -103,8 +117,11 @@ public class AuthenticationController {
      */
     @Operation(
             summary = "Refresh access token (cookie-based)",
-            description = "Reads refresh token from HttpOnly cookie only. No request body."
-    )
+            description = """
+                    Public. Đọc refresh token từ HttpOnly cookie only — không cần request body.
+                    Rate limit Redis: 20 req/phút theo IP. Set lại cookie refresh mới.
+                    """)
+    @SecurityRequirements
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> refresh(
             @Parameter(hidden = true) HttpServletRequest httpRequest) {
@@ -129,6 +146,12 @@ public class AuthenticationController {
      * POST /api/v1/auth/logout — revoke current access token and optional refresh token.
      */
     @PostMapping("/logout")
+    @Operation(
+            summary = "Logout",
+            description = """
+                    Yêu cầu JWT. Revoke access token (Redis blacklist + DB) và refresh token nếu có.
+                    Xóa cookie `refresh_token`.
+                    """)
     public ResponseEntity<ApiResponse<Void>> logout(
             @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest httpRequest,

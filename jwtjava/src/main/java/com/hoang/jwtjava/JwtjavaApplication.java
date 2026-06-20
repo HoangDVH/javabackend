@@ -25,9 +25,9 @@ import java.net.URISyntaxException;
         RateLimitProperties.class
 })
 @OpenAPIDefinition(tags = {
-        @Tag(name = "Authentication", description = "Register, login, JWT introspect and refresh"),
-        @Tag(name = "Categories", description = "Product categories"),
-        @Tag(name = "Products", description = "Products, pagination, admin image upload"),
+        @Tag(name = "Authentication", description = "Register, login, introspect, refresh (cookie), logout. Rate limit qua Redis."),
+        @Tag(name = "Categories", description = "Danh mục sản phẩm (public). Redis cache list/detail TTL 30 phút."),
+        @Tag(name = "Products", description = "Sản phẩm: list/filter/pagination, detail, CRUD seller/admin, upload ảnh. Redis cache list/detail TTL 2 phút."),
         @Tag(name = "Orders", description = "Create and view your orders"),
         @Tag(name = "Payments", description = "Pay for your orders"),
         @Tag(name = "Users", description = "User management (admin)")

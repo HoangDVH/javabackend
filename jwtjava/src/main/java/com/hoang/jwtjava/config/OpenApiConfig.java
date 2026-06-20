@@ -45,7 +45,15 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("JwtJava API")
-                        .description("REST API: JWT auth, categories, products, local image storage.")
+                        .description("""
+                                REST API cho Easy Mart: JWT auth, danh mục, sản phẩm, đơn hàng, thanh toán.
+                                
+                                **Public (không cần JWT):** GET `/api/v1/products/**`, GET `/api/v1/categories/**`, POST auth register/login/introspect/refresh.
+                                
+                                **Redis:** JWT blacklist, rate limit auth, cache catalog (product list/detail TTL 2 phút, category TTL 30 phút). Khi Redis tắt/lỗi API vẫn trả dữ liệu từ DB.
+                                
+                                **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
+                                """)
                         .version("v1"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))
                 .components(new Components()

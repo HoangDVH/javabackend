@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -66,11 +67,16 @@ public class ProductController {
     }
 
     @GetMapping
+    @SecurityRequirements
     @Operation(summary = "List products (paginated)", description = """
-            **isFeatured:** omit = *all* products. `true` = featured only. `false` = non-featured only.
-            **keyword:** tìm kiếm theo tên/mô tả sản phẩm (không phân biệt hoa thường).
-            **Advanced filters:** minPrice, maxPrice, minRating, hasDiscount, inStock.
-            **Pagination:** use query params `page`, `size`, `sort` (e.g. `sort=createdAt,desc`). Do not use `string` as a sort property.
+            Public endpoint. Lọc và phân trang trên server trước khi trả kết quả.
+            
+            **Filters:** categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating, hasDiscount, inStock.
+            **isFeatured:** bỏ qua = tất cả; `true` = nổi bật; `false` = không nổi bật.
+            **keyword:** tìm trong tên/mô tả (không phân biệt hoa thường).
+            **Pagination:** `page`, `size`, `sort` (vd. `sort=createdAt,desc`). Không sort theo `string`.
+            
+            **Cache:** Redis TTL 2 phút, key theo bộ filter + page + sort. Invalidate khi create/update/delete product.
             """)
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listProducts(
             @Parameter(description = "Filter by category id; omit = no filter")
@@ -115,16 +121,26 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long id) {
+    @SecurityRequirements
+    @Operation(
+            summary = "Get product by id",
+            description = "Public endpoint. **Cache:** Redis TTL 2 phút theo id; invalidate khi product thay đổi.")
+    public ResponseEntity<ApiResponse<ProductResponse>> getProduct(
+            @Parameter(description = "Product id", example = "1")
+            @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.<ProductResponse>builder()
                 .result(productService.getProduct(id))
                 .build());
     }
 
     @GetMapping("/seller/my")
+    @Operation(
+            summary = "List seller products",
+            description = "SELLER: sản phẩm của chính mình. ADMIN: có thể truyền `sellerEmail` để xem sản phẩm seller khác. Không cache.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getMySellerProducts(
             @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "ADMIN only: email seller cần xem; bỏ qua nếu không phải ADMIN")
             @RequestParam(required = false) String sellerEmail) {
         String targetSeller = hasRole(jwt, "ADMIN") && sellerEmail != null && !sellerEmail.isBlank()
                 ? sellerEmail
@@ -135,6 +151,9 @@ public class ProductController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Create product (JSON)",
+            description = "Tạo sản phẩm với body JSON. Ảnh truyền qua field `images` (URL). Invalidate product cache sau khi tạo.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
             @AuthenticationPrincipal Jwt jwt,
@@ -176,9 +195,13 @@ public class ProductController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Update product (JSON)",
+            description = "Cập nhật sản phẩm với body JSON. Invalidate product cache sau khi cập nhật.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
             @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "Product id", example = "1")
             @PathVariable Long id,
             @RequestBody @Valid ProductCreateRequest request) {
         boolean isAdmin = hasRole(jwt, "ADMIN");
@@ -215,9 +238,11 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete product", description = "SELLER xóa sản phẩm của mình; ADMIN xóa bất kỳ. Invalidate product cache.")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(
             @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "Product id", example = "1")
             @PathVariable Long id) {
         boolean isAdmin = hasRole(jwt, "ADMIN");
         productService.deleteProduct(id, jwt.getSubject(), isAdmin);
