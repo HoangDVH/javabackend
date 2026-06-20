@@ -7,6 +7,7 @@ RUN chmod +x mvnw
 RUN ./mvnw -B -DskipTests dependency:go-offline
 
 COPY src src
+RUN rm -f src/main/resources/application-local.yaml
 RUN ./mvnw -B -DskipTests clean package
 
 FROM eclipse-temurin:17-jre

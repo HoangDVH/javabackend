@@ -7,6 +7,8 @@ RUN chmod +x mvnw
 RUN ./mvnw -B -DskipTests dependency:go-offline
 
 COPY jwtjava/src src
+# Local-only overrides must not ship in the image (would force app.redis.host=localhost in Docker).
+RUN rm -f src/main/resources/application-local.yaml
 RUN ./mvnw -B -DskipTests clean package
 
 FROM eclipse-temurin:17-jre
