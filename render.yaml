@@ -1,4 +1,9 @@
 services:
+  - type: keyvalue
+    name: jwtjava-redis
+    ipAllowList: []
+    plan: free
+
   - type: web
     name: jwtjava-api
     runtime: docker
@@ -32,8 +37,12 @@ services:
       - key: REDIS_ENABLED
         value: "true"
       - key: REDIS_HOST
-        sync: false
+        fromService:
+          type: keyvalue
+          name: jwtjava-redis
+          property: host
       - key: REDIS_PORT
-        sync: false
-      - key: REDIS_PASSWORD
-        sync: false
+        fromService:
+          type: keyvalue
+          name: jwtjava-redis
+          property: port
