@@ -4,6 +4,7 @@ import com.hoang.jwtjava.config.AppRedisProperties;
 import com.hoang.jwtjava.config.CatalogCacheProperties;
 import com.hoang.jwtjava.config.CloudinaryProperties;
 import com.hoang.jwtjava.config.CorsProperties;
+import com.hoang.jwtjava.config.MailProperties;
 import com.hoang.jwtjava.config.RateLimitProperties;
 import com.hoang.jwtjava.config.StorageProperties;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -22,10 +23,11 @@ import java.net.URISyntaxException;
         CloudinaryProperties.class,
         AppRedisProperties.class,
         CatalogCacheProperties.class,
-        RateLimitProperties.class
+        RateLimitProperties.class,
+        MailProperties.class
 })
 @OpenAPIDefinition(tags = {
-        @Tag(name = "Authentication", description = "Register, login, introspect, refresh (cookie), logout. Rate limit qua Redis."),
+        @Tag(name = "Authentication", description = "Register, login, introspect, refresh (cookie), logout, forgot/reset password. Rate limit qua Redis."),
         @Tag(name = "Categories", description = "Danh mục sản phẩm (public). Redis cache list/detail TTL 30 phút."),
         @Tag(name = "Products", description = "Sản phẩm: list/filter/pagination, detail, CRUD seller/admin, upload ảnh. Redis cache list/detail TTL 2 phút."),
         @Tag(name = "Orders", description = "Create and view your orders"),

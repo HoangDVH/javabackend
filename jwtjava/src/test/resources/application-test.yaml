@@ -12,6 +12,9 @@ spring:
 
 app:
   seed-images-from-network: false
+  mail:
+    resend:
+      enabled: false
 
 springdoc:
   swagger-ui:

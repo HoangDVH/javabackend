@@ -26,6 +26,7 @@ public enum ErrorCode {
     OUT_OF_STOCK(1015, "Product is out of stock", HttpStatus.BAD_REQUEST),
     PAYMENT_INVALID(1016, "Payment request is invalid", HttpStatus.BAD_REQUEST),
     TOO_MANY_REQUESTS(1017, "Too many requests", HttpStatus.TOO_MANY_REQUESTS),
+    INVALID_RESET_TOKEN(1018, "Invalid or expired password reset link", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode httpStatusCode) {

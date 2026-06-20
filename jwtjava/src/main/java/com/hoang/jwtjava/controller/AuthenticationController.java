@@ -1,8 +1,10 @@
 package com.hoang.jwtjava.controller;
 
 import com.hoang.jwtjava.dto.request.AuthenticationRequest;
+import com.hoang.jwtjava.dto.request.ForgotPasswordRequest;
 import com.hoang.jwtjava.dto.request.IntrospectRequest;
 import com.hoang.jwtjava.dto.request.LogoutRequest;
+import com.hoang.jwtjava.dto.request.ResetPasswordRequest;
 import com.hoang.jwtjava.dto.request.UserCreationRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.AuthenticationResponse;
@@ -10,6 +12,7 @@ import com.hoang.jwtjava.dto.response.IntrospectResponse;
 import com.hoang.jwtjava.dto.response.UserResponse;
 import com.hoang.jwtjava.service.AuthenticationService;
 import com.hoang.jwtjava.service.AuthenticationService.AuthTokens;
+import com.hoang.jwtjava.service.PasswordResetService;
 import com.hoang.jwtjava.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,6 +43,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @Value("${jwt.refresh-cookie.name:refresh_token}")
     private String refreshCookieName;
@@ -98,6 +102,43 @@ public class AuthenticationController {
                         .message("Login successful")
                         .result(body)
                         .build());
+    }
+
+    /**
+     * POST /api/v1/auth/forgot-password — send reset link via email (Resend).
+     */
+    @PostMapping("/forgot-password")
+    @SecurityRequirements
+    @Operation(
+            summary = "Forgot password",
+            description = """
+                    Public. Gửi link đặt lại mật khẩu qua email (Resend) nếu tài khoản tồn tại.
+                    Luôn trả 200 để không tiết lộ email có hay không.
+                    Rate limit: 5 req/15 phút theo IP, 3 req/15 phút theo email.
+                    """)
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        passwordResetService.requestPasswordReset(request);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("If an account exists for this email, password reset instructions have been sent.")
+                .build());
+    }
+
+    /**
+     * POST /api/v1/auth/reset-password — set new password using token from email link.
+     */
+    @PostMapping("/reset-password")
+    @SecurityRequirements
+    @Operation(
+            summary = "Reset password",
+            description = """
+                    Public. Đặt mật khẩu mới bằng token từ link email (?token=...).
+                    Token one-time, TTL 30 phút. Rate limit: 10 req/phút theo IP.
+                    """)
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Password reset successful. You can log in with your new password.")
+                .build());
     }
 
     /**

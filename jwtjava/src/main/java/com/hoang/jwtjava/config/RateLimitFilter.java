@@ -28,6 +28,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final String LOGIN_PATH = "/api/v1/auth/login";
     private static final String REFRESH_PATH = "/api/v1/auth/refresh";
     private static final String REGISTER_PATH = "/api/v1/auth/register";
+    private static final String FORGOT_PASSWORD_PATH = "/api/v1/auth/forgot-password";
+    private static final String RESET_PASSWORD_PATH = "/api/v1/auth/reset-password";
 
     private final RateLimitService rateLimitService;
     private final RateLimitProperties rateLimitProperties;
@@ -50,6 +52,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             case LOGIN_PATH -> rateLimitService.check("login", clientIp, rateLimitProperties.getLogin());
             case REFRESH_PATH -> rateLimitService.check("refresh", clientIp, rateLimitProperties.getRefresh());
             case REGISTER_PATH -> rateLimitService.check("register", clientIp, rateLimitProperties.getRegister());
+            case FORGOT_PASSWORD_PATH -> rateLimitService.check("forgot-password", clientIp, rateLimitProperties.getForgotPassword());
+            case RESET_PASSWORD_PATH -> rateLimitService.check("reset-password", clientIp, rateLimitProperties.getResetPassword());
             default -> RateLimitDecision.allowed(Integer.MAX_VALUE);
         };
 

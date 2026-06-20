@@ -22,6 +22,12 @@ public class RateLimitProperties {
 
     EndpointLimit register = new EndpointLimit(5, 300);
 
+    EndpointLimit forgotPassword = new EndpointLimit(5, 900);
+
+    EndpointLimit forgotPasswordByEmail = new EndpointLimit(3, 900);
+
+    EndpointLimit resetPassword = new EndpointLimit(10, 60);
+
     @Getter
     @Setter
     @FieldDefaults(level = AccessLevel.PRIVATE)

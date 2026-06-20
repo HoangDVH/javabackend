@@ -46,3 +46,11 @@ services:
           type: keyvalue
           name: jwtjava-redis
           property: port
+      - key: MAIL_ENABLED
+        value: "true"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: APP_FRONTEND_RESET_URL
+        value: "https://easy-mart-vert.vercel.app/reset-password"

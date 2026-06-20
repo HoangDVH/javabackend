@@ -48,9 +48,11 @@ public class OpenApiConfig {
                         .description("""
                                 REST API cho Easy Mart: JWT auth, danh mục, sản phẩm, đơn hàng, thanh toán.
                                 
-                                **Public (không cần JWT):** GET `/api/v1/products/**`, GET `/api/v1/categories/**`, POST auth register/login/introspect/refresh.
+                                **Public (không cần JWT):** GET `/api/v1/products/**`, GET `/api/v1/categories/**`, POST auth register/login/introspect/refresh/forgot-password/reset-password.
                                 
                                 **Redis:** JWT blacklist, rate limit auth, cache catalog (product list/detail TTL 2 phút, category TTL 30 phút). Khi Redis tắt/lỗi API vẫn trả dữ liệu từ DB.
+                                
+                                **Quên mật khẩu:** Resend gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
                                 
                                 **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
                                 """)

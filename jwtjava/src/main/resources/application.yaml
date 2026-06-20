@@ -102,3 +102,20 @@ app:
     register:
       max-requests: 5
       window-seconds: 300
+    forgot-password:
+      max-requests: 5
+      window-seconds: 900
+    forgot-password-by-email:
+      max-requests: 3
+      window-seconds: 900
+    reset-password:
+      max-requests: 10
+      window-seconds: 60
+  mail:
+    resend:
+      enabled: ${MAIL_ENABLED:false}
+      api-key: ${RESEND_API_KEY:}
+      from: ${MAIL_FROM:Easy Mart <onboarding@resend.dev>}
+    password-reset:
+      frontend-url: ${APP_FRONTEND_RESET_URL:http://localhost:5173/reset-password}
+      token-ttl-seconds: 1800
