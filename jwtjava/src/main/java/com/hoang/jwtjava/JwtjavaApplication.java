@@ -4,6 +4,7 @@ import com.hoang.jwtjava.config.AppRedisProperties;
 import com.hoang.jwtjava.config.CatalogCacheProperties;
 import com.hoang.jwtjava.config.CloudinaryProperties;
 import com.hoang.jwtjava.config.CorsProperties;
+import com.hoang.jwtjava.config.DbMigrationProperties;
 import com.hoang.jwtjava.config.MailProperties;
 import com.hoang.jwtjava.config.RateLimitProperties;
 import com.hoang.jwtjava.config.StorageProperties;
@@ -24,7 +25,8 @@ import java.net.URISyntaxException;
         AppRedisProperties.class,
         CatalogCacheProperties.class,
         RateLimitProperties.class,
-        MailProperties.class
+        MailProperties.class,
+        DbMigrationProperties.class
 })
 @OpenAPIDefinition(tags = {
         @Tag(name = "Authentication", description = "Register, login, introspect, refresh (cookie), logout, forgot/reset password. Rate limit qua Redis."),

@@ -63,6 +63,9 @@ public class Order {
     @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    LocalDateTime updatedAt;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null)

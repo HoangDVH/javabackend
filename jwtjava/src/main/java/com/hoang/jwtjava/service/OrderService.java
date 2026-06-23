@@ -4,6 +4,7 @@ import com.hoang.jwtjava.dto.request.OrderCreateRequest;
 import com.hoang.jwtjava.dto.request.OrderItemRequest;
 import com.hoang.jwtjava.dto.response.OrderItemResponse;
 import com.hoang.jwtjava.dto.response.OrderResponse;
+import com.hoang.jwtjava.dto.response.OrderStatusHistoryResponse;
 import com.hoang.jwtjava.entity.Order;
 import com.hoang.jwtjava.entity.OrderItem;
 import com.hoang.jwtjava.entity.OrderStatus;
@@ -12,6 +13,7 @@ import com.hoang.jwtjava.entity.User;
 import com.hoang.jwtjava.exception.AppException;
 import com.hoang.jwtjava.exception.ErrorCode;
 import com.hoang.jwtjava.repository.OrderRepository;
+import com.hoang.jwtjava.repository.OrderStatusHistoryRepository;
 import com.hoang.jwtjava.repository.ProductRepository;
 import com.hoang.jwtjava.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
@@ -83,6 +86,22 @@ public class OrderService {
         Order order = orderRepository.findByIdAndUserEmail(orderId, userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         return toResponse(order, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderStatusHistoryResponse> getOrderStatusHistory(String userEmail, Long orderId) {
+        orderRepository.findByIdAndUserEmail(orderId, userEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        return orderStatusHistoryRepository.findByOrderIdOrderByChangedAtDesc(orderId)
+                .stream()
+                .map(entry -> OrderStatusHistoryResponse.builder()
+                        .id(entry.getId())
+                        .oldStatus(entry.getOldStatus())
+                        .newStatus(entry.getNewStatus())
+                        .changedAt(entry.getChangedAt())
+                        .changedBy(entry.getChangedBy())
+                        .build())
+                .toList();
     }
 
     @Transactional(readOnly = true)

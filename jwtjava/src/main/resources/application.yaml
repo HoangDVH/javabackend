@@ -47,6 +47,9 @@ jwt:
 # Tài khoản admin tự seed khi app start (nếu email chưa tồn tại).
 # Ghi đè mật khẩu: biến môi trường APP_SEED_ADMIN_PASSWORD hoặc sửa giá trị dưới.
 app:
+  db:
+    # Render/Postgres: bật để tự chạy index + trigger SQL lúc startup (idempotent).
+    run-sql-migrations-on-startup: ${APP_DB_RUN_SQL_MIGRATIONS_ON_STARTUP:false}
   # Origin SPA (Vite/React thường 5173). Thêm domain production khi deploy.
   cors:
     allowed-origins:

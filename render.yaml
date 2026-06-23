@@ -26,6 +26,8 @@ services:
         value: "https://easy-mart-vert.vercel.app,http://localhost:5173,http://localhost:3000"
       - key: DATABASE_URL
         sync: false
+      - key: APP_DB_RUN_SQL_MIGRATIONS_ON_STARTUP
+        value: "true"
       - key: CLOUDINARY_ENABLED
         value: "true"
       - key: CLOUDINARY_CLOUD_NAME

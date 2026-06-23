@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,9 @@ public class Product {
 
     @Column(nullable = false, name = "created_at")
     LocalDate createdAt;
+
+    @Column(name = "updated_at")
+    LocalDateTime updatedAt;
 
     @PrePersist
     void prePersist() {

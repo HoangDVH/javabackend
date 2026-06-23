@@ -3,6 +3,7 @@ package com.hoang.jwtjava.controller;
 import com.hoang.jwtjava.dto.request.OrderCreateRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.OrderResponse;
+import com.hoang.jwtjava.dto.response.OrderStatusHistoryResponse;
 import com.hoang.jwtjava.service.OrderService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -56,6 +57,16 @@ public class OrderController {
             @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.<OrderResponse>builder()
                 .result(orderService.getMyOrder(jwt.getSubject(), id))
+                .build());
+    }
+
+    @GetMapping("/{id}/status-history")
+    @PreAuthorize("hasAnyRole('USER','SELLER','ADMIN')")
+    public ResponseEntity<ApiResponse<List<OrderStatusHistoryResponse>>> getOrderStatusHistory(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.<List<OrderStatusHistoryResponse>>builder()
+                .result(orderService.getOrderStatusHistory(jwt.getSubject(), id))
                 .build());
     }
 
