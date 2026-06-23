@@ -3,6 +3,7 @@ package com.hoang.jwtjava.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,7 +11,9 @@ import lombok.experimental.FieldDefaults;
 import java.time.Instant;
 
 @Entity
-@Table(name = "invalidated_tokens")
+@Table(name = "invalidated_tokens", indexes = {
+        @Index(name = "idx_invalidated_tokens_expires", columnList = "expires_at")
+})
 @Getter
 @Setter
 @Builder
