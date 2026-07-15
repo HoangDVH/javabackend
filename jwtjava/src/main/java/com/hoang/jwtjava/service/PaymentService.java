@@ -34,9 +34,13 @@ public class PaymentService {
         if (order.getStatus() == OrderStatus.PAID)
             throw new AppException(ErrorCode.PAYMENT_INVALID);
 
+        String method = request.getMethod().trim().toUpperCase();
+        if ("VNPAY".equals(method))
+            throw new AppException(ErrorCode.PAYMENT_INVALID);
+
         Payment payment = Payment.builder()
                 .order(order)
-                .method(request.getMethod().trim().toUpperCase())
+                .method(method)
                 .amount(order.getTotalAmount())
                 .status(PaymentStatus.SUCCESS)
                 .transactionRef(UUID.randomUUID().toString())

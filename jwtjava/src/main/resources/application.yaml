@@ -122,3 +122,17 @@ app:
     password-reset:
       frontend-url: ${APP_FRONTEND_RESET_URL:http://localhost:5173/reset-password}
       token-ttl-seconds: 1800
+  # Cổng thanh toán VNPay (v2.1.0). Cần URL public cho ipn-url khi deploy.
+  vnpay:
+    enabled: ${VNPAY_ENABLED:false}
+    tmn-code: ${VNPAY_TMN_CODE:}
+    hash-secret: ${VNPAY_HASH_SECRET:}
+    pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+    return-url: ${VNPAY_RETURN_URL:https://easy-mart-vert.vercel.app/payment/result}
+    ipn-url: ${VNPAY_IPN_URL:https://javabackend-olfp.onrender.com/api/v1/payments/vnpay/ipn}
+    version: "2.1.0"
+    command: pay
+    curr-code: VND
+    locale: vn
+    order-type: other
+    expire-minutes: 15

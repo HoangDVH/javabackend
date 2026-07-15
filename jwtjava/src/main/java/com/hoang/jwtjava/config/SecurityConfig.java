@@ -48,6 +48,10 @@ public class SecurityConfig {
             "/api/v1/auth/reset-password"
     };
 
+    private static final String[] PUBLIC_VNPAY_ENDPOINTS = {
+            "/api/v1/payments/vnpay/ipn"
+    };
+
     /** Springdoc OpenAPI + Swagger UI — không cần JWT để mở tài liệu. */
     private static final String[] SWAGGER_WHITELIST = {
             "/v3/api-docs",
@@ -69,6 +73,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                 .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.GET, PUBLIC_VNPAY_ENDPOINTS).permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

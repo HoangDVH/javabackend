@@ -6,6 +6,7 @@ import com.hoang.jwtjava.config.CloudinaryProperties;
 import com.hoang.jwtjava.config.CorsProperties;
 import com.hoang.jwtjava.config.DbMigrationProperties;
 import com.hoang.jwtjava.config.MailProperties;
+import com.hoang.jwtjava.config.VnpayProperties;
 import com.hoang.jwtjava.config.RateLimitProperties;
 import com.hoang.jwtjava.config.StorageProperties;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -26,6 +27,7 @@ import java.net.URISyntaxException;
         CatalogCacheProperties.class,
         RateLimitProperties.class,
         MailProperties.class,
+        VnpayProperties.class,
         DbMigrationProperties.class
 })
 @OpenAPIDefinition(tags = {
@@ -33,7 +35,7 @@ import java.net.URISyntaxException;
         @Tag(name = "Categories", description = "Danh mục sản phẩm (public). Redis cache list/detail TTL 30 phút."),
         @Tag(name = "Products", description = "Sản phẩm: list/filter/pagination, detail, CRUD seller/admin, upload ảnh. Redis cache list/detail TTL 2 phút."),
         @Tag(name = "Orders", description = "Create and view your orders"),
-        @Tag(name = "Payments", description = "Pay for your orders"),
+        @Tag(name = "Payments", description = "Pay for your orders (mock cash/COD or VNPay gateway)"),
         @Tag(name = "Users", description = "User management (admin)")
 })
 public class JwtjavaApplication {

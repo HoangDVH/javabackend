@@ -4,6 +4,8 @@ import com.hoang.jwtjava.dto.request.PaymentCreateRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.PaymentResponse;
 import com.hoang.jwtjava.service.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,13 @@ public class PaymentController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','SELLER','ADMIN')")
+    @Operation(
+            summary = "Mock payment (COD / CASH)",
+            description = """
+                    Thanh toán giả lập — đánh dấu đơn PAID ngay lập tức (học tập / test).
+                    **Không dùng cho VNPay** — gọi POST `/api/v1/payments/vnpay` thay thế.
+                    `method` ví dụ: `CASH`, `COD`.
+                    """)
     public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody @Valid PaymentCreateRequest request) {
@@ -42,6 +51,7 @@ public class PaymentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','SELLER','ADMIN')")
+    @Operation(summary = "My payment history", description = "Lịch sử thanh toán của user đang đăng nhập.")
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getMyPayments(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(ApiResponse.<List<PaymentResponse>>builder()
                 .result(paymentService.getMyPayments(jwt.getSubject()))
@@ -50,8 +60,12 @@ public class PaymentController {
 
     @GetMapping("/seller/history")
     @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    @Operation(
+            summary = "Seller payment history",
+            description = "SELLER xem thanh toán liên quan sản phẩm của mình. ADMIN có thể truyền `sellerEmail`.")
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getSellerPayments(
             @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "ADMIN only: lọc theo email seller")
             @RequestParam(required = false) String sellerEmail) {
         String targetSeller = hasRole(jwt, "ADMIN") && sellerEmail != null && !sellerEmail.isBlank()
                 ? sellerEmail

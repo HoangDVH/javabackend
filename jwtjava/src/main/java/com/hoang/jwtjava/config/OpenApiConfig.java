@@ -55,6 +55,8 @@ public class OpenApiConfig {
                                 **Quên mật khẩu:** Resend gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
                                 
                                 **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
+                                
+                                **Thanh toán VNPay:** POST `/api/v1/payments/vnpay` (JWT) trả `paymentUrl` → redirect user. VNPay gọi GET `/api/v1/payments/vnpay/ipn` (public) để cập nhật đơn PAID. Return URL cấu hình trên Vercel (`/payment/result`). Mock COD: POST `/api/v1/payments` với `method=CASH`.
                                 """)
                         .version("v1"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))

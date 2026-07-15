@@ -12,6 +12,12 @@ spring:
 
 app:
   seed-images-from-network: false
+  vnpay:
+    enabled: true
+    tmn-code: TIBBMYJU
+    hash-secret: 8YJPTW1TD40WLS1I5HTVWUV38V3HZX25
+    return-url: http://localhost:5173/payment/result
+    ipn-url: http://localhost:8080/api/v1/payments/vnpay/ipn
   mail:
     resend:
       enabled: false

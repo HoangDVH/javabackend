@@ -56,3 +56,13 @@ services:
         sync: false
       - key: APP_FRONTEND_RESET_URL
         value: "https://easy-mart-vert.vercel.app/reset-password"
+      - key: VNPAY_ENABLED
+        value: "true"
+      - key: VNPAY_TMN_CODE
+        sync: false
+      - key: VNPAY_HASH_SECRET
+        sync: false
+      - key: VNPAY_RETURN_URL
+        value: "https://easy-mart-vert.vercel.app/payment/result"
+      - key: VNPAY_IPN_URL
+        value: "https://javabackend-olfp.onrender.com/api/v1/payments/vnpay/ipn"
