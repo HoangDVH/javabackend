@@ -46,6 +46,8 @@ public class VnpayPaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         if (order.getStatus() == OrderStatus.PAID)
             throw new AppException(ErrorCode.PAYMENT_ALREADY_EXISTS);
+        if (order.getStatus() == OrderStatus.CANCELLED)
+            throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
 
         paymentRepository.findTopByOrderIdAndMethodAndStatusInOrderByCreatedAtDesc(
                         order.getId(), METHOD_VNPAY, PaymentStatus.SUCCESS)
@@ -108,6 +110,10 @@ public class VnpayPaymentService {
         if (payment.getStatus() == PaymentStatus.SUCCESS)
             return new VnpayIpnResponse("02", "Order already confirmed");
 
+        Order order = payment.getOrder();
+        if (order.getStatus() == OrderStatus.CANCELLED)
+            return new VnpayIpnResponse("02", "Order already confirmed");
+
         long vnpAmount = parseLong(vnpParams.get("vnp_Amount"));
         if (vnpAmount != (long) payment.getAmount() * 100L)
             return new VnpayIpnResponse("04", "Invalid amount");
@@ -117,7 +123,6 @@ public class VnpayPaymentService {
 
         if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
             payment.setStatus(PaymentStatus.SUCCESS);
-            Order order = payment.getOrder();
             order.setStatus(OrderStatus.PAID);
             orderRepository.save(order);
             paymentRepository.save(payment);

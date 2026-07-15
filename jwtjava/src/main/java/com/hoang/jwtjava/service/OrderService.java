@@ -8,12 +8,14 @@ import com.hoang.jwtjava.dto.response.OrderStatusHistoryResponse;
 import com.hoang.jwtjava.entity.Order;
 import com.hoang.jwtjava.entity.OrderItem;
 import com.hoang.jwtjava.entity.OrderStatus;
+import com.hoang.jwtjava.entity.PaymentStatus;
 import com.hoang.jwtjava.entity.Product;
 import com.hoang.jwtjava.entity.User;
 import com.hoang.jwtjava.exception.AppException;
 import com.hoang.jwtjava.exception.ErrorCode;
 import com.hoang.jwtjava.repository.OrderRepository;
 import com.hoang.jwtjava.repository.OrderStatusHistoryRepository;
+import com.hoang.jwtjava.repository.PaymentRepository;
 import com.hoang.jwtjava.repository.ProductRepository;
 import com.hoang.jwtjava.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class OrderService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
 
     @Transactional
     public OrderResponse createOrder(String userEmail, OrderCreateRequest request) {
@@ -119,6 +122,35 @@ public class OrderService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         order.setStatus(OrderStatus.PAID);
         return orderRepository.save(order);
+    }
+
+    /**
+     * Hủy đơn chưa thanh toán — hoàn tồn kho và hủy payment VNPay đang PENDING.
+     */
+    @Transactional
+    public OrderResponse cancelOrder(String userEmail, Long orderId) {
+        Order order = orderRepository.findByIdAndUserEmail(orderId, userEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT)
+            throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+
+        restoreStock(order);
+        cancelPendingPayments(order.getId());
+        order.setStatus(OrderStatus.CANCELLED);
+        return toResponse(orderRepository.save(order), null);
+    }
+
+    private void restoreStock(Order order) {
+        for (OrderItem item : order.getItems()) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+            product.setStock(product.getStock() + item.getQuantity());
+        }
+    }
+
+    private void cancelPendingPayments(Long orderId) {
+        paymentRepository.findByOrder_IdAndStatus(orderId, PaymentStatus.PENDING)
+                .forEach(payment -> payment.setStatus(PaymentStatus.FAILED));
     }
 
     private OrderResponse toResponse(Order order, String sellerEmailFilter) {

@@ -56,7 +56,7 @@ public class OpenApiConfig {
                                 
                                 **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
                                 
-                                **Thanh toán VNPay:** POST `/api/v1/payments/vnpay` (JWT) trả `paymentUrl` → redirect user. VNPay gọi GET `/api/v1/payments/vnpay/ipn` (public) để cập nhật đơn PAID. Return URL cấu hình trên Vercel (`/payment/result`). Mock COD: POST `/api/v1/payments` với `method=CASH`.
+                                **Thanh toán VNPay:** POST `/api/v1/payments/vnpay` (JWT) trả `paymentUrl` → redirect user. VNPay gọi GET `/api/v1/payments/vnpay/ipn` (public) để cập nhật đơn PAID. Return URL cấu hình trên Vercel (`/payment/result`). Mock COD: POST `/api/v1/payments` với `method=CASH`. Hủy đơn chưa thanh toán: POST `/api/v1/orders/{id}/cancel`.
                                 """)
                         .version("v1"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))

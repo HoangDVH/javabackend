@@ -5,6 +5,7 @@ import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.OrderResponse;
 import com.hoang.jwtjava.dto.response.OrderStatusHistoryResponse;
 import com.hoang.jwtjava.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -62,11 +63,30 @@ public class OrderController {
 
     @GetMapping("/{id}/status-history")
     @PreAuthorize("hasAnyRole('USER','SELLER','ADMIN')")
+    @Operation(summary = "Order status history", description = "Lịch sử thay đổi trạng thái đơn hàng.")
     public ResponseEntity<ApiResponse<List<OrderStatusHistoryResponse>>> getOrderStatusHistory(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.<List<OrderStatusHistoryResponse>>builder()
                 .result(orderService.getOrderStatusHistory(jwt.getSubject(), id))
+                .build());
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('USER','SELLER','ADMIN')")
+    @Operation(
+            summary = "Cancel order",
+            description = """
+                    Hủy đơn **chưa thanh toán** (`PENDING_PAYMENT`).
+                    Hoàn tồn kho sản phẩm và đánh dấu payment VNPay đang chờ là `FAILED`.
+                    Không hủy được đơn đã `PAID` hoặc đã `CANCELLED`.
+                    """)
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.<OrderResponse>builder()
+                .message("Order cancelled successfully")
+                .result(orderService.cancelOrder(jwt.getSubject(), id))
                 .build());
     }
 
