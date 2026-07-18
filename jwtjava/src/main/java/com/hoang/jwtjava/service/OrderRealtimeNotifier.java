@@ -35,11 +35,30 @@ public class OrderRealtimeNotifier {
                 sellerEmails.add(item.getSellerEmail());
         });
 
-        sellerEmails.forEach(sellerEmail -> publishToSeller(order, sellerEmail, type));
+        sellerEmails.forEach(sellerEmail -> publishSellerEvent(order, sellerEmail, type));
+        publishToBuyer(order, type);
     }
 
     public void publishToSeller(Order order, String sellerEmail, String type) {
-        eventPublisher.publishEvent(new SellerOrderChangedEvent(
+        publishSellerEvent(order, sellerEmail, type);
+        publishToBuyer(order, type);
+    }
+
+    public void publishToBuyer(Order order, String type) {
+        if (order.getUser() == null || order.getUser().getEmail() == null || order.getUser().getEmail().isBlank())
+            return;
+
+        eventPublisher.publishEvent(new UserOrderChangedEvent(
+                order.getUser().getEmail(),
+                OrderRealtimeEvent.builder()
+                        .type(type)
+                        .order(toBuyerResponse(order))
+                        .occurredAt(LocalDateTime.now())
+                        .build()));
+    }
+
+    private void publishSellerEvent(Order order, String sellerEmail, String type) {
+        eventPublisher.publishEvent(new UserOrderChangedEvent(
                 sellerEmail,
                 OrderRealtimeEvent.builder()
                         .type(type)
@@ -49,24 +68,32 @@ public class OrderRealtimeNotifier {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void sendAfterCommit(SellerOrderChangedEvent event) {
+    public void sendAfterCommit(UserOrderChangedEvent event) {
         messagingTemplate.convertAndSendToUser(
-                event.sellerEmail(),
+                event.userEmail(),
                 "/queue/orders",
                 event.payload());
+    }
+
+    private OrderResponse toBuyerResponse(Order order) {
+        var items = order.getItems().stream()
+                .map(this::toItemResponse)
+                .toList();
+
+        return OrderResponse.builder()
+                .id(order.getId())
+                .userEmail(order.getUser().getEmail())
+                .items(items)
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus().name())
+                .createdAt(order.getCreatedAt())
+                .build();
     }
 
     private OrderResponse toSellerResponse(Order order, String sellerEmail) {
         var items = order.getItems().stream()
                 .filter(item -> sellerEmail.equalsIgnoreCase(item.getSellerEmail()))
-                .map(item -> OrderItemResponse.builder()
-                        .productId(item.getProductId())
-                        .productName(item.getProductName())
-                        .unitPrice(item.getUnitPrice())
-                        .quantity(item.getQuantity())
-                        .sellerEmail(item.getSellerEmail())
-                        .fulfillmentStatus(effectiveFulfillmentStatus(item).name())
-                        .build())
+                .map(this::toItemResponse)
                 .toList();
 
         int sellerTotal = items.stream()
@@ -83,14 +110,25 @@ public class OrderRealtimeNotifier {
                 .build();
     }
 
+    private OrderItemResponse toItemResponse(OrderItem item) {
+        return OrderItemResponse.builder()
+                .productId(item.getProductId())
+                .productName(item.getProductName())
+                .unitPrice(item.getUnitPrice())
+                .quantity(item.getQuantity())
+                .sellerEmail(item.getSellerEmail())
+                .fulfillmentStatus(effectiveFulfillmentStatus(item).name())
+                .build();
+    }
+
     private static FulfillmentStatus effectiveFulfillmentStatus(OrderItem item) {
         return item.getFulfillmentStatus() == null
                 ? FulfillmentStatus.AWAITING_CONFIRMATION
                 : item.getFulfillmentStatus();
     }
 
-    public record SellerOrderChangedEvent(
-            String sellerEmail,
+    public record UserOrderChangedEvent(
+            String userEmail,
             OrderRealtimeEvent payload) {
     }
 }

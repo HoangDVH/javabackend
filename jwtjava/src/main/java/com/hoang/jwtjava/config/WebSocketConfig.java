@@ -78,11 +78,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .toList();
 
-        boolean sellerOrAdmin = authorities.stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_SELLER")
+        boolean allowed = authorities.stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER")
+                        || authority.getAuthority().equals("ROLE_SELLER")
                         || authority.getAuthority().equals("ROLE_ADMIN"));
-        if (!sellerOrAdmin)
-            throw new BadCredentialsException("Seller or admin role required");
+        if (!allowed)
+            throw new BadCredentialsException("Authenticated user role required");
 
         return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
     }

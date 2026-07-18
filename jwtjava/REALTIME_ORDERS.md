@@ -1,14 +1,18 @@
-# Seller order updates (STOMP WebSocket)
+# Order updates (STOMP WebSocket)
 
 ## Connection
 
 - Production URL: `wss://javabackend-olfp.onrender.com/ws`
 - Local URL: `ws://localhost:8080/ws`
-- Authentication: send the access token in the STOMP `CONNECT` header.
-- Seller destination: `/user/queue/orders`
+- Authentication: send the access token in the STOMP `CONNECT` header
+- Destination for both buyer and seller: `/user/queue/orders`
 
-Only access tokens with the `SELLER` or `ADMIN` role can connect. A seller receives
-only the items and total belonging to that seller.
+Access tokens with role `USER`, `SELLER`, or `ADMIN` can connect.
+
+| Role | Payload |
+|------|---------|
+| Seller | Only items and total belonging to that seller |
+| Buyer | Full order with all items |
 
 ## Frontend example
 
@@ -18,7 +22,7 @@ Install:
 npm install @stomp/stompjs
 ```
 
-Connect:
+Connect (buyer or seller):
 
 ```javascript
 import { Client } from "@stomp/stompjs";
@@ -38,7 +42,7 @@ client.onConnect = () => {
     const event = JSON.parse(message.body);
     // event.type:
     // ORDER_CREATED | ORDER_STATUS_CHANGED | FULFILLMENT_STATUS_CHANGED
-    // event.order: seller-filtered OrderResponse
+    // event.order: OrderResponse
     refreshOrMergeOrder(event.order);
   });
 };
@@ -46,11 +50,25 @@ client.onConnect = () => {
 client.activate();
 ```
 
-Call `client.deactivate()` when the seller logs out. After reconnecting, call
-`GET /api/v1/orders/seller/history` to resynchronize because realtime events are
-not persisted for offline clients.
+Call `client.deactivate()` on logout/unmount.
 
-## Update fulfillment status
+After reconnect:
+
+- Seller: `GET /api/v1/orders/seller/history`
+- Buyer: `GET /api/v1/orders`
+
+Realtime events are not persisted for offline clients.
+
+## Events pushed to buyer
+
+Buyer receives events on:
+
+- Order created
+- Payment success (`PAID`)
+- Order cancelled
+- Seller fulfillment status changes (`CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`)
+
+## Update fulfillment status (seller)
 
 ```http
 PATCH /api/v1/orders/{orderId}/seller-status
@@ -66,3 +84,8 @@ Allowed sequence:
 
 The order must be `PAID`. The API updates only the items owned by the authenticated
 seller. An admin may add `?sellerEmail=seller@example.com`.
+
+After a successful update, backend pushes:
+
+- Filtered order to the seller queue
+- Full order to the buyer queue
