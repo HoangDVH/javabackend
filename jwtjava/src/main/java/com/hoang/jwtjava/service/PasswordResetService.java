@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -35,6 +36,7 @@ public class PasswordResetService {
     private final RateLimitService rateLimitService;
     private final RateLimitProperties rateLimitProperties;
 
+    @Transactional
     public void requestPasswordReset(ForgotPasswordRequest request) {
         String email = normalizeEmail(request.getEmail());
         enforceForgotPasswordRateLimit(email);

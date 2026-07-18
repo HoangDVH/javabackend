@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +36,7 @@ public class PasswordResetTokenStore {
         this.redisTemplate = Optional.ofNullable(redisTemplate);
     }
 
+    @Transactional
     public void save(String tokenHash, String email) {
         int ttlSeconds = Math.max(60, mailProperties.getPasswordReset().getTokenTtlSeconds());
         passwordResetTokenRepository.deleteByEmailIgnoreCase(email);
@@ -58,6 +60,7 @@ public class PasswordResetTokenStore {
                 .build());
     }
 
+    @Transactional
     public Optional<String> consume(String tokenHash) {
         if (useRedis()) {
             try {
