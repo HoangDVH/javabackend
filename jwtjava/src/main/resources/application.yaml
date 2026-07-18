@@ -30,16 +30,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-  # SMTP Gmail — quên mật khẩu. Dùng App Password (không dùng mật khẩu Gmail thường).
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-      mail.smtp.starttls.required: true
 
 jwt:
   # Dev mặc định — production bắt buộc đặt JWT_SIGNER_KEY (Base64 256-bit).
@@ -125,8 +115,10 @@ app:
       max-requests: 10
       window-seconds: 60
   mail:
-    enabled: ${MAIL_ENABLED:false}
-    from: ${MAIL_FROM:Easy Mart <noreply@gmail.com>}
+    resend:
+      enabled: ${MAIL_ENABLED:false}
+      api-key: ${RESEND_API_KEY:}
+      from: ${MAIL_FROM:Easy Mart <onboarding@resend.dev>}
     password-reset:
       frontend-url: ${APP_FRONTEND_RESET_URL:http://localhost:5173/reset-password}
       token-ttl-seconds: 1800

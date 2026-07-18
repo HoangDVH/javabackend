@@ -19,19 +19,16 @@
 #     folder: jwtjava/products
 # Hoặc dùng biến môi trường: CLOUDINARY_ENABLED=true, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 #
-# Quên mật khẩu (SMTP Gmail):
-# spring:
-#   mail:
-#     username: "yourshop@gmail.com"
-#     password: "xxxx xxxx xxxx xxxx"   # App Password (16 ký tự)
+# Quên mật khẩu (Resend API qua HTTPS — tương thích Render Free):
 # app:
 #   mail:
-#     enabled: true
-#     from: "Easy Mart <yourshop@gmail.com>"
+#     resend:
+#       enabled: true
+#       api-key: "re_..."
+#       from: "Easy Mart <onboarding@resend.dev>"
 #     password-reset:
 #       frontend-url: "http://localhost:5173/reset-password"
-# Hoặc env: MAIL_ENABLED=true, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM, APP_FRONTEND_RESET_URL
-# Tạo App Password: Google Account → Security → 2-Step Verification → App passwords
+# Hoặc env: MAIL_ENABLED=true, RESEND_API_KEY, MAIL_FROM, APP_FRONTEND_RESET_URL
 #
 # Thanh toán VNPay:
 # app:

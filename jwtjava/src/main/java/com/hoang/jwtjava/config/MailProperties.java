@@ -12,13 +12,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.mail")
 public class MailProperties {
 
-    /** Bật gửi email thật qua SMTP (Gmail). Khi false chỉ log link reset. */
-    boolean enabled = false;
-
-    /** Địa chỉ hiển thị người gửi, ví dụ: Easy Mart &lt;shop@gmail.com&gt; */
-    String from = "Easy Mart <noreply@gmail.com>";
+    Resend resend = new Resend();
 
     PasswordReset passwordReset = new PasswordReset();
+
+    @Getter
+    @Setter
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class Resend {
+        boolean enabled = false;
+        String apiKey = "";
+        String from = "Easy Mart <onboarding@resend.dev>";
+    }
 
     @Getter
     @Setter

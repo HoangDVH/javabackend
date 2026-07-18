@@ -52,7 +52,7 @@ public class OpenApiConfig {
                                 
                                 **Redis:** JWT blacklist, rate limit auth, cache catalog (product list/detail TTL 2 phút, category TTL 30 phút). Khi Redis tắt/lỗi API vẫn trả dữ liệu từ DB.
                                 
-                                **Quên mật khẩu:** Gmail SMTP gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
+                                **Quên mật khẩu:** Resend HTTPS API gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
                                 
                                 **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
                                 
