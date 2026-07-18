@@ -30,7 +30,7 @@ public class PasswordResetService {
 
     private final UserRepository userRepository;
     private final PasswordResetTokenStore passwordResetTokenStore;
-    private final ResendMailService resendMailService;
+    private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
     private final RateLimitService rateLimitService;
     private final RateLimitProperties rateLimitProperties;
@@ -44,7 +44,7 @@ public class PasswordResetService {
             String tokenHash = hashToken(rawToken);
             passwordResetTokenStore.save(tokenHash, user.getEmail());
             try {
-                resendMailService.sendPasswordResetEmail(user.getEmail(), rawToken);
+                mailService.sendPasswordResetEmail(user.getEmail(), rawToken);
             } catch (RuntimeException ex) {
                 log.error("Failed to send password reset email to {}: {}", user.getEmail(), ex.getMessage());
             }

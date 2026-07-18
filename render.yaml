@@ -50,7 +50,9 @@ services:
           property: port
       - key: MAIL_ENABLED
         value: "true"
-      - key: RESEND_API_KEY
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
         sync: false
       - key: MAIL_FROM
         sync: false

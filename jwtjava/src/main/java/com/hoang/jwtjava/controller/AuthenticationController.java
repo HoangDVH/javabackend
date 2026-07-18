@@ -105,14 +105,14 @@ public class AuthenticationController {
     }
 
     /**
-     * POST /api/v1/auth/forgot-password — send reset link via email (Resend).
+     * POST /api/v1/auth/forgot-password — send reset link via email (Gmail SMTP).
      */
     @PostMapping("/forgot-password")
     @SecurityRequirements
     @Operation(
             summary = "Forgot password",
             description = """
-                    Public. Gửi link đặt lại mật khẩu qua email (Resend) nếu tài khoản tồn tại.
+                    Public. Gửi link đặt lại mật khẩu qua email (Gmail SMTP) nếu tài khoản tồn tại.
                     Luôn trả 200 để không tiết lộ email có hay không.
                     Rate limit: 5 req/15 phút theo IP, 3 req/15 phút theo email.
                     """)
