@@ -2,9 +2,11 @@ package com.hoang.jwtjava.service;
 
 import com.hoang.jwtjava.dto.request.OrderCreateRequest;
 import com.hoang.jwtjava.dto.request.OrderItemRequest;
+import com.hoang.jwtjava.dto.request.SellerOrderStatusUpdateRequest;
 import com.hoang.jwtjava.dto.response.OrderItemResponse;
 import com.hoang.jwtjava.dto.response.OrderResponse;
 import com.hoang.jwtjava.dto.response.OrderStatusHistoryResponse;
+import com.hoang.jwtjava.entity.FulfillmentStatus;
 import com.hoang.jwtjava.entity.Order;
 import com.hoang.jwtjava.entity.OrderItem;
 import com.hoang.jwtjava.entity.OrderStatus;
@@ -34,6 +36,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final OrderRealtimeNotifier orderRealtimeNotifier;
 
     @Transactional
     public OrderResponse createOrder(String userEmail, OrderCreateRequest request) {
@@ -61,6 +64,7 @@ public class OrderService {
                     .unitPrice(unitPrice)
                     .quantity(itemRequest.getQuantity())
                     .sellerEmail(product.getSellerEmail())
+                    .fulfillmentStatus(FulfillmentStatus.AWAITING_CONFIRMATION)
                     .build());
             total += unitPrice * itemRequest.getQuantity();
 
@@ -73,7 +77,9 @@ public class OrderService {
                 .totalAmount(total)
                 .status(OrderStatus.PENDING_PAYMENT)
                 .build();
-        return toResponse(orderRepository.save(order), null);
+        Order savedOrder = orderRepository.save(order);
+        orderRealtimeNotifier.publishToSellers(savedOrder, OrderRealtimeNotifier.CREATED);
+        return toResponse(savedOrder, null);
     }
 
     @Transactional(readOnly = true)
@@ -117,11 +123,52 @@ public class OrderService {
     }
 
     @Transactional
+    public OrderResponse updateSellerFulfillmentStatus(
+            String sellerEmail,
+            Long orderId,
+            SellerOrderStatusUpdateRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        List<OrderItem> sellerItems = order.getItems().stream()
+                .filter(item -> sellerEmail.equalsIgnoreCase(item.getSellerEmail()))
+                .toList();
+        if (sellerItems.isEmpty())
+            throw new AppException(ErrorCode.ORDER_NOT_FOUND);
+        if (order.getStatus() != OrderStatus.PAID)
+            throw new AppException(ErrorCode.ORDER_FULFILLMENT_UPDATE_NOT_ALLOWED);
+
+        FulfillmentStatus target = request.getStatus();
+        boolean changed = false;
+        for (OrderItem item : sellerItems) {
+            FulfillmentStatus current = effectiveFulfillmentStatus(item);
+            if (!isFulfillmentTransitionAllowed(current, target))
+                throw new AppException(ErrorCode.ORDER_FULFILLMENT_UPDATE_NOT_ALLOWED);
+            if (current != target) {
+                item.setFulfillmentStatus(target);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            Order savedOrder = orderRepository.save(order);
+            orderRealtimeNotifier.publishToSeller(
+                    savedOrder,
+                    sellerEmail,
+                    OrderRealtimeNotifier.FULFILLMENT_STATUS_CHANGED);
+            return toResponse(savedOrder, sellerEmail);
+        }
+        return toResponse(order, sellerEmail);
+    }
+
+    @Transactional
     public Order markPaid(String userEmail, Long orderId) {
         Order order = orderRepository.findByIdAndUserEmail(orderId, userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         order.setStatus(OrderStatus.PAID);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        orderRealtimeNotifier.publishToSellers(savedOrder, OrderRealtimeNotifier.STATUS_CHANGED);
+        return savedOrder;
     }
 
     /**
@@ -137,7 +184,9 @@ public class OrderService {
         restoreStock(order);
         cancelPendingPayments(order.getId());
         order.setStatus(OrderStatus.CANCELLED);
-        return toResponse(orderRepository.save(order), null);
+        Order savedOrder = orderRepository.save(order);
+        orderRealtimeNotifier.publishToSellers(savedOrder, OrderRealtimeNotifier.STATUS_CHANGED);
+        return toResponse(savedOrder, null);
     }
 
     private void restoreStock(Order order) {
@@ -162,6 +211,7 @@ public class OrderService {
                         .unitPrice(item.getUnitPrice())
                         .quantity(item.getQuantity())
                         .sellerEmail(item.getSellerEmail())
+                        .fulfillmentStatus(effectiveFulfillmentStatus(item).name())
                         .build())
                 .toList();
 
@@ -179,5 +229,25 @@ public class OrderService {
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
                 .build();
+    }
+
+    private static FulfillmentStatus effectiveFulfillmentStatus(OrderItem item) {
+        return item.getFulfillmentStatus() == null
+                ? FulfillmentStatus.AWAITING_CONFIRMATION
+                : item.getFulfillmentStatus();
+    }
+
+    private static boolean isFulfillmentTransitionAllowed(
+            FulfillmentStatus current,
+            FulfillmentStatus target) {
+        if (current == target)
+            return true;
+        return switch (current) {
+            case AWAITING_CONFIRMATION -> target == FulfillmentStatus.CONFIRMED;
+            case CONFIRMED -> target == FulfillmentStatus.PROCESSING;
+            case PROCESSING -> target == FulfillmentStatus.SHIPPED;
+            case SHIPPED -> target == FulfillmentStatus.DELIVERED;
+            case DELIVERED -> false;
+        };
     }
 }

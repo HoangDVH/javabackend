@@ -29,6 +29,7 @@ public enum ErrorCode {
     PAYMENT_GATEWAY_ERROR(1020, "Payment gateway error", HttpStatus.BAD_GATEWAY),
     PAYMENT_SIGNATURE_INVALID(1021, "Payment signature is invalid", HttpStatus.BAD_REQUEST),
     ORDER_CANCEL_NOT_ALLOWED(1022, "Order cannot be cancelled in its current status", HttpStatus.CONFLICT),
+    ORDER_FULFILLMENT_UPDATE_NOT_ALLOWED(1023, "Fulfillment status transition is not allowed", HttpStatus.CONFLICT),
     TOO_MANY_REQUESTS(1017, "Too many requests", HttpStatus.TOO_MANY_REQUESTS),
     INVALID_RESET_TOKEN(1018, "Invalid or expired password reset link", HttpStatus.BAD_REQUEST),
     ;

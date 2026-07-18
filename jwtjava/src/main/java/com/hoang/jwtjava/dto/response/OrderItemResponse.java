@@ -11,4 +11,5 @@ public class OrderItemResponse {
     private Integer unitPrice;
     private Integer quantity;
     private String sellerEmail;
+    private String fulfillmentStatus;
 }

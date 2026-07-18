@@ -1,6 +1,7 @@
 package com.hoang.jwtjava.controller;
 
 import com.hoang.jwtjava.dto.request.OrderCreateRequest;
+import com.hoang.jwtjava.dto.request.SellerOrderStatusUpdateRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.OrderResponse;
 import com.hoang.jwtjava.dto.response.OrderStatusHistoryResponse;
@@ -16,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -100,6 +102,29 @@ public class OrderController {
                 : jwt.getSubject();
         return ResponseEntity.ok(ApiResponse.<List<OrderResponse>>builder()
                 .result(orderService.getSellerOrders(targetSeller))
+                .build());
+    }
+
+    @PatchMapping("/{id}/seller-status")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    @Operation(
+            summary = "Update seller fulfillment status",
+            description = """
+                    Cập nhật trạng thái giao hàng cho các sản phẩm của seller trong đơn đã thanh toán.
+                    Luồng hợp lệ: `AWAITING_CONFIRMATION` → `CONFIRMED` → `PROCESSING`
+                    → `SHIPPED` → `DELIVERED`. ADMIN có thể truyền `sellerEmail`.
+                    """)
+    public ResponseEntity<ApiResponse<OrderResponse>> updateSellerFulfillmentStatus(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @RequestParam(required = false) String sellerEmail,
+            @RequestBody @Valid SellerOrderStatusUpdateRequest request) {
+        String targetSeller = hasRole(jwt, "ADMIN") && sellerEmail != null && !sellerEmail.isBlank()
+                ? sellerEmail
+                : jwt.getSubject();
+        return ResponseEntity.ok(ApiResponse.<OrderResponse>builder()
+                .message("Fulfillment status updated successfully")
+                .result(orderService.updateSellerFulfillmentStatus(targetSeller, id, request))
                 .build());
     }
 

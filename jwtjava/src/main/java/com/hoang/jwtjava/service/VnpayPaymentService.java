@@ -36,6 +36,7 @@ public class VnpayPaymentService {
     private final VnpayProperties vnpayProperties;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final OrderRealtimeNotifier orderRealtimeNotifier;
 
     @Transactional
     public VnpayPaymentInitResponse initiatePayment(String userEmail, VnpayPaymentInitRequest request, String clientIp) {
@@ -126,6 +127,7 @@ public class VnpayPaymentService {
             order.setStatus(OrderStatus.PAID);
             orderRepository.save(order);
             paymentRepository.save(payment);
+            orderRealtimeNotifier.publishToSellers(order, OrderRealtimeNotifier.STATUS_CHANGED);
             return new VnpayIpnResponse("00", "Confirm Success");
         }
 

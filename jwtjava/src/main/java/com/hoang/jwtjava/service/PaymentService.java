@@ -23,6 +23,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final OrderRealtimeNotifier orderRealtimeNotifier;
 
     @Transactional
     public PaymentResponse createPayment(String userEmail, PaymentCreateRequest request) {
@@ -48,6 +49,7 @@ public class PaymentService {
 
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
+        orderRealtimeNotifier.publishToSellers(order, OrderRealtimeNotifier.STATUS_CHANGED);
 
         return toResponse(paymentRepository.save(payment), null);
     }

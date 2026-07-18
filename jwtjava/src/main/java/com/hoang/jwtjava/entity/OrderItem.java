@@ -2,6 +2,8 @@ package com.hoang.jwtjava.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,4 +34,8 @@ public class OrderItem {
 
     @Column(name = "seller_email", length = 255)
     String sellerEmail;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fulfillment_status", length = 32)
+    FulfillmentStatus fulfillmentStatus;
 }
