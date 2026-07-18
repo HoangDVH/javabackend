@@ -29,7 +29,7 @@ public class MailProperties {
     @Setter
     @FieldDefaults(level = AccessLevel.PRIVATE)
     public static class PasswordReset {
-        String frontendUrl = "http://localhost:5173/reset-password";
+        String frontendUrl = "https://easy-mart-vert.vercel.app/reset-password";
         int tokenTtlSeconds = 1800;
     }
 }

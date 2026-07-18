@@ -120,7 +120,7 @@ app:
       api-key: ${RESEND_API_KEY:}
       from: ${MAIL_FROM:Easy Mart <onboarding@resend.dev>}
     password-reset:
-      frontend-url: ${APP_FRONTEND_RESET_URL:http://localhost:5173/reset-password}
+      frontend-url: ${APP_FRONTEND_RESET_URL:https://easy-mart-vert.vercel.app/reset-password}
       token-ttl-seconds: 1800
   # Cổng thanh toán VNPay (v2.1.0). Cần URL public cho ipn-url khi deploy.
   vnpay:
