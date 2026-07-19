@@ -78,7 +78,7 @@ public class ProductChatService {
             if (!isRecoverableChatError(ex.getErrorCode()))
                 throw ex;
             log.warn("Gemini unavailable ({}), falling back to catalog suggestions", ex.getErrorCode());
-            advice = catalogFallback(catalog);
+            advice = catalogFallback(catalog, ex.getErrorCode());
         }
 
         chatHistoryService.appendTurn(sessionId, message, advice.reply());
@@ -98,16 +98,26 @@ public class ProductChatService {
                 || code == ErrorCode.CHAT_QUOTA_EXCEEDED;
     }
 
-    private ParsedAdvice catalogFallback(List<ProductResponse> catalog) {
+    private ParsedAdvice catalogFallback(List<ProductResponse> catalog, ErrorCode reason) {
         List<ChatProductResponse> products = catalog.stream().limit(5).map(this::toChatProduct).toList();
         String names = products.stream()
                 .map(ChatProductResponse::getName)
                 .filter(n -> n != null && !n.isBlank())
                 .limit(3)
                 .collect(Collectors.joining(", "));
+        String why = switch (reason) {
+            case CHAT_QUOTA_EXCEEDED ->
+                    "Gemini hết quota (thường gặp với key AQ. khi project chưa gắn billing trên Google Cloud).";
+            case CHAT_AUTH_FAILED ->
+                    "Gemini từ chối API key — tạo key mới trên AI Studio và cập nhật GEMINI_API_KEY.";
+            case CHAT_INVALID_RESPONSE ->
+                    "Gemini trả phản hồi không hợp lệ.";
+            default ->
+                    "Không gọi được Gemini (kiểm tra logs Render: Gemini HTTP / quota).";
+        };
         String reply = names.isBlank()
-                ? "Trợ lý AI đang bận. Đây là vài sản phẩm đang bán trong catalog."
-                : "Trợ lý AI đang bận, mình gợi ý nhanh từ catalog: " + names + ".";
+                ? "Trợ lý AI tạm thời lỗi (" + why + ") Đây là vài sản phẩm trong catalog."
+                : "Trợ lý AI tạm thời lỗi (" + why + ") Gợi ý từ catalog: " + names + ".";
         return new ParsedAdvice(reply, products);
     }
 

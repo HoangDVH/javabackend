@@ -86,7 +86,7 @@ class ProductChatServiceTest {
         request.setSessionId("session-3");
 
         var response = productChatService.advise(request);
-        assertTrue(response.getReply().contains("Trợ lý AI đang bận")
+        assertTrue(response.getReply().contains("tạm thời lỗi")
                 || response.getReply().contains("catalog"));
         assertEquals(1, response.getProducts().size());
         assertEquals(1L, response.getProducts().get(0).getId());
@@ -104,7 +104,7 @@ class ProductChatServiceTest {
         var response = productChatService.advise(request);
         assertEquals(1, response.getProducts().size());
         assertEquals(9L, response.getProducts().get(0).getId());
-        assertTrue(response.getReply().contains("Laptop") || response.getReply().contains("catalog"));
+        assertTrue(response.getReply().contains("quota") || response.getReply().contains("Laptop"));
     }
 
     @Test
