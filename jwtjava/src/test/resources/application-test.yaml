@@ -21,6 +21,10 @@ app:
   mail:
     resend:
       enabled: false
+  gemini:
+    enabled: false
+  redis:
+    enabled: false
 
 springdoc:
   swagger-ui:

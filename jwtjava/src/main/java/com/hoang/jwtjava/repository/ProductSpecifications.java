@@ -1,9 +1,11 @@
 package com.hoang.jwtjava.repository;
 
 import com.hoang.jwtjava.entity.Product;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Locale;
 
 public final class ProductSpecifications {
@@ -31,11 +33,29 @@ public final class ProductSpecifications {
             if (keyword == null || keyword.isBlank())
                 return cb.conjunction();
 
-            String normalizedKeyword = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
-            return cb.or(
-                    cb.like(cb.lower(root.get("name")), normalizedKeyword),
-                    cb.like(cb.lower(root.get("description")), normalizedKeyword)
-            );
+            String[] tokens = keyword.trim().toLowerCase(Locale.ROOT).split("\\s+");
+            if (tokens.length <= 1) {
+                String normalizedKeyword = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
+                return cb.or(
+                        cb.like(cb.lower(root.get("name")), normalizedKeyword),
+                        cb.like(cb.lower(root.get("description")), normalizedKeyword)
+                );
+            }
+
+            // Multi-token: match if ANY token appears in name/description (OR),
+            // useful for chatbot queries like "áo khoác đen".
+            ArrayList<Predicate> predicates = new ArrayList<>();
+            for (String token : tokens) {
+                if (token.isBlank() || token.length() < 2)
+                    continue;
+                String pattern = "%" + token + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("name")), pattern),
+                        cb.like(cb.lower(root.get("description")), pattern)));
+            }
+            if (predicates.isEmpty())
+                return cb.conjunction();
+            return cb.or(predicates.toArray(Predicate[]::new));
         };
     }
 

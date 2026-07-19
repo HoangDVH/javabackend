@@ -28,6 +28,8 @@ public class RateLimitProperties {
 
     EndpointLimit resetPassword = new EndpointLimit(10, 60);
 
+    EndpointLimit chatAdvise = new EndpointLimit(10, 60);
+
     @Getter
     @Setter
     @FieldDefaults(level = AccessLevel.PRIVATE)

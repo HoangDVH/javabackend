@@ -5,6 +5,7 @@ import com.hoang.jwtjava.config.CatalogCacheProperties;
 import com.hoang.jwtjava.config.CloudinaryProperties;
 import com.hoang.jwtjava.config.CorsProperties;
 import com.hoang.jwtjava.config.DbMigrationProperties;
+import com.hoang.jwtjava.config.GeminiProperties;
 import com.hoang.jwtjava.config.MailProperties;
 import com.hoang.jwtjava.config.VnpayProperties;
 import com.hoang.jwtjava.config.RateLimitProperties;
@@ -28,12 +29,14 @@ import java.net.URISyntaxException;
         RateLimitProperties.class,
         MailProperties.class,
         VnpayProperties.class,
-        DbMigrationProperties.class
+        DbMigrationProperties.class,
+        GeminiProperties.class
 })
 @OpenAPIDefinition(tags = {
         @Tag(name = "Authentication", description = "Register, login, introspect, refresh (cookie), logout, forgot/reset password. Rate limit qua Redis."),
         @Tag(name = "Categories", description = "Danh mục sản phẩm (public). Redis cache list/detail TTL 30 phút."),
         @Tag(name = "Products", description = "Sản phẩm: list/filter/pagination, detail, CRUD seller/admin, upload ảnh. Redis cache list/detail TTL 2 phút."),
+        @Tag(name = "Chat", description = "Chatbot tư vấn sản phẩm (public, Gemini). Rate limit IP; lịch sử ngắn hạn theo sessionId trên Redis."),
         @Tag(name = "Orders", description = "Create and view your orders"),
         @Tag(name = "Payments", description = "Pay for your orders (mock cash/COD or VNPay gateway)"),
         @Tag(name = "Users", description = "User management (admin)")

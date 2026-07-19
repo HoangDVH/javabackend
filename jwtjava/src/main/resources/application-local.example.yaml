@@ -42,6 +42,15 @@
 # Hoặc env: VNPAY_ENABLED=true, VNPAY_TMN_CODE, VNPAY_HASH_SECRET,
 #           VNPAY_RETURN_URL, VNPAY_IPN_URL
 #
+# Chatbot tư vấn sản phẩm (Gemini):
+# app:
+#   gemini:
+#     enabled: true
+#     api-key: "YOUR_GEMINI_API_KEY"
+#     model: "gemini-2.5-flash"
+# Hoặc env: GEMINI_ENABLED=true, GEMINI_API_KEY
+# Lấy key tại https://aistudio.google.com/apikey — không commit key vào Git.
+#
 # Chạy local không cần MySQL (H2 in-memory) — xem application-local.yaml mẫu:
 # spring:
 #   datasource:
