@@ -69,8 +69,17 @@ public class ProductChatService {
 
         List<ChatHistoryService.ChatTurn> history = chatHistoryService.getRecentTurns(sessionId);
         String systemPrompt = buildSystemPrompt(catalog);
-        String modelRaw = geminiClient.generateText(systemPrompt, history, message);
-        ParsedAdvice advice = parseAdvice(modelRaw, catalog);
+
+        ParsedAdvice advice;
+        try {
+            String modelRaw = geminiClient.generateText(systemPrompt, history, message);
+            advice = parseAdvice(modelRaw, catalog);
+        } catch (AppException ex) {
+            if (!isRecoverableChatError(ex.getErrorCode()))
+                throw ex;
+            log.warn("Gemini unavailable ({}), falling back to catalog suggestions", ex.getErrorCode());
+            advice = catalogFallback(catalog);
+        }
 
         chatHistoryService.appendTurn(sessionId, message, advice.reply());
 
@@ -80,6 +89,26 @@ public class ProductChatService {
                 .products(advice.products())
                 .disclaimer(DISCLAIMER)
                 .build();
+    }
+
+    private static boolean isRecoverableChatError(ErrorCode code) {
+        return code == ErrorCode.CHAT_UNAVAILABLE
+                || code == ErrorCode.CHAT_INVALID_RESPONSE
+                || code == ErrorCode.CHAT_AUTH_FAILED
+                || code == ErrorCode.CHAT_QUOTA_EXCEEDED;
+    }
+
+    private ParsedAdvice catalogFallback(List<ProductResponse> catalog) {
+        List<ChatProductResponse> products = catalog.stream().limit(5).map(this::toChatProduct).toList();
+        String names = products.stream()
+                .map(ChatProductResponse::getName)
+                .filter(n -> n != null && !n.isBlank())
+                .limit(3)
+                .collect(Collectors.joining(", "));
+        String reply = names.isBlank()
+                ? "Trợ lý AI đang bận. Đây là vài sản phẩm đang bán trong catalog."
+                : "Trợ lý AI đang bận, mình gợi ý nhanh từ catalog: " + names + ".";
+        return new ParsedAdvice(reply, products);
     }
 
     List<ProductResponse> retrieveCatalog(String message, Long categoryId, Integer maxBudget) {

@@ -75,3 +75,15 @@ GEMINI_MODEL=gemini-2.5-flash
 ```
 
 Key chỉ nằm trên server, không đưa vào Vercel frontend.
+
+Key mới từ AI Studio thường bắt đầu bằng `AQ.` (auth key) — backend hỗ trợ định dạng này.
+
+Sau khi thêm/sửa env trên Render: **Save** rồi đợi deploy xong (hoặc Manual Deploy). Trong logs tìm dòng:
+
+`Gemini chat: enabled=true, apiKeyConfigured=true, keyPrefix=AQ., model=gemini-2.5-flash`
+
+### Nếu chatbot báo lỗi / AI bận
+
+1. Mở [Google AI Studio API keys](https://aistudio.google.com/apikey), tạo key mới, dán lại `GEMINI_API_KEY`, redeploy.
+2. Nếu Google trả `429` / `limit: 0`: project chưa có free-tier quota — vào Google Cloud Console gắn billing cho project của key (project number trong AI Studio), rồi tạo key mới.
+3. Backend vẫn trả gợi ý từ catalog khi Gemini lỗi (fallback), không còn trắng UI.

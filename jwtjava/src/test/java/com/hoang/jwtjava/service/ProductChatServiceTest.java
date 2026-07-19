@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProductChatServiceTest {
@@ -78,7 +77,7 @@ class ProductChatServiceTest {
     }
 
     @Test
-    void invalidGeminiJsonThrowsChatInvalidResponse() {
+    void invalidGeminiJsonFallsBackToCatalog() {
         products.results = List.of(product(1L, "Áo"));
         gemini.response = "not-json";
 
@@ -86,8 +85,26 @@ class ProductChatServiceTest {
         request.setMessage("áo");
         request.setSessionId("session-3");
 
-        AppException ex = assertThrows(AppException.class, () -> productChatService.advise(request));
-        assertEquals(ErrorCode.CHAT_INVALID_RESPONSE, ex.getErrorCode());
+        var response = productChatService.advise(request);
+        assertTrue(response.getReply().contains("Trợ lý AI đang bận")
+                || response.getReply().contains("catalog"));
+        assertEquals(1, response.getProducts().size());
+        assertEquals(1L, response.getProducts().get(0).getId());
+    }
+
+    @Test
+    void geminiUnavailableFallsBackToCatalog() {
+        products.results = List.of(product(9L, "Laptop"));
+        gemini.error = new AppException(ErrorCode.CHAT_QUOTA_EXCEEDED);
+
+        ChatAdviseRequest request = new ChatAdviseRequest();
+        request.setMessage("laptop");
+        request.setSessionId("session-4");
+
+        var response = productChatService.advise(request);
+        assertEquals(1, response.getProducts().size());
+        assertEquals(9L, response.getProducts().get(0).getId());
+        assertTrue(response.getReply().contains("Laptop") || response.getReply().contains("catalog"));
     }
 
     @Test
@@ -151,6 +168,7 @@ class ProductChatServiceTest {
     private static final class RecordingGemini extends GeminiClient {
         private final AtomicInteger calls = new AtomicInteger();
         private String response = "{}";
+        private AppException error;
 
         private RecordingGemini() {
             super(new GeminiProperties(), new ObjectMapper());
@@ -159,6 +177,8 @@ class ProductChatServiceTest {
         @Override
         public String generateText(String systemInstruction, List<ChatHistoryService.ChatTurn> history, String userMessage) {
             calls.incrementAndGet();
+            if (error != null)
+                throw error;
             return response;
         }
     }
