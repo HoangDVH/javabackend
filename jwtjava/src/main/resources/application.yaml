@@ -114,9 +114,6 @@ app:
     reset-password:
       max-requests: 10
       window-seconds: 60
-    chat-advise:
-      max-requests: 10
-      window-seconds: 60
   mail:
     resend:
       enabled: ${MAIL_ENABLED:false}
@@ -125,18 +122,6 @@ app:
     password-reset:
       frontend-url: ${APP_FRONTEND_RESET_URL:https://easy-mart-vert.vercel.app/reset-password}
       token-ttl-seconds: 1800
-  gemini:
-    enabled: ${GEMINI_ENABLED:false}
-    api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-2.5-flash}
-    api-base-url: ${GEMINI_API_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
-    timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:20}
-    max-catalog-products: 12
-    description-max-chars: 160
-    max-output-tokens: 1024
-    history:
-      max-turns: 3
-      ttl-seconds: 1800
   # Cổng thanh toán VNPay (v2.1.0). Cần URL public cho ipn-url khi deploy.
   vnpay:
     enabled: ${VNPAY_ENABLED:false}

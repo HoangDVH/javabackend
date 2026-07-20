@@ -42,8 +42,7 @@ public final class ProductSpecifications {
                 );
             }
 
-            // Multi-token: match if ANY token appears in name/description (OR),
-            // useful for chatbot queries like "áo khoác đen".
+            // Multi-token: match if ANY token appears in name/description (OR).
             ArrayList<Predicate> predicates = new ArrayList<>();
             for (String token : tokens) {
                 if (token.isBlank() || token.length() < 2)

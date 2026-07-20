@@ -66,9 +66,3 @@ services:
         value: "https://easy-mart-vert.vercel.app/payment/result"
       - key: VNPAY_IPN_URL
         value: "https://javabackend-olfp.onrender.com/api/v1/payments/vnpay/ipn"
-      - key: GEMINI_ENABLED
-        value: "true"
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: GEMINI_MODEL
-        value: "gemini-2.5-flash"

@@ -45,8 +45,7 @@ public class SecurityConfig {
             "/api/v1/auth/introspect",
             "/api/v1/auth/refresh",
             "/api/v1/auth/forgot-password",
-            "/api/v1/auth/reset-password",
-            "/api/v1/chat/advise"
+            "/api/v1/auth/reset-password"
     };
 
     private static final String[] PUBLIC_VNPAY_ENDPOINTS = {
