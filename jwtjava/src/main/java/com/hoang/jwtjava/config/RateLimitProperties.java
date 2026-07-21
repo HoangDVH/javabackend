@@ -18,6 +18,8 @@ public class RateLimitProperties {
 
     EndpointLimit loginByEmail = new EndpointLimit(5, 60);
 
+    EndpointLimit googleLogin = new EndpointLimit(10, 60);
+
     EndpointLimit refresh = new EndpointLimit(20, 60);
 
     EndpointLimit register = new EndpointLimit(5, 300);

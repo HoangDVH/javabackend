@@ -42,6 +42,15 @@
 # Hoặc env: VNPAY_ENABLED=true, VNPAY_TMN_CODE, VNPAY_HASH_SECRET,
 #           VNPAY_RETURN_URL, VNPAY_IPN_URL
 #
+# Đăng nhập Google (GIS trên FE → POST /api/v1/auth/google):
+# app:
+#   google:
+#     enabled: true
+#     client-id: "YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com"
+# Hoặc env: GOOGLE_AUTH_ENABLED=true, GOOGLE_CLIENT_ID=...
+# Tạo OAuth Client ID (Web) tại https://console.cloud.google.com/apis/credentials
+# Authorized JavaScript origins: https://easy-mart-vert.vercel.app , http://localhost:5173
+#
 # Chạy local không cần MySQL (H2 in-memory) — xem application-local.yaml mẫu:
 # spring:
 #   datasource:

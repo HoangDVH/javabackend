@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/api/v1/auth/login";
+    private static final String GOOGLE_LOGIN_PATH = "/api/v1/auth/google";
     private static final String REFRESH_PATH = "/api/v1/auth/refresh";
     private static final String REGISTER_PATH = "/api/v1/auth/register";
     private static final String FORGOT_PASSWORD_PATH = "/api/v1/auth/forgot-password";
@@ -50,6 +51,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         RateLimitDecision decision = switch (path) {
             case LOGIN_PATH -> rateLimitService.check("login", clientIp, rateLimitProperties.getLogin());
+            case GOOGLE_LOGIN_PATH -> rateLimitService.check("google-login", clientIp, rateLimitProperties.getGoogleLogin());
             case REFRESH_PATH -> rateLimitService.check("refresh", clientIp, rateLimitProperties.getRefresh());
             case REGISTER_PATH -> rateLimitService.check("register", clientIp, rateLimitProperties.getRegister());
             case FORGOT_PASSWORD_PATH -> rateLimitService.check("forgot-password", clientIp, rateLimitProperties.getForgotPassword());

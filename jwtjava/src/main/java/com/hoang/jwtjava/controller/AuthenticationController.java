@@ -2,6 +2,7 @@ package com.hoang.jwtjava.controller;
 
 import com.hoang.jwtjava.dto.request.AuthenticationRequest;
 import com.hoang.jwtjava.dto.request.ForgotPasswordRequest;
+import com.hoang.jwtjava.dto.request.GoogleAuthRequest;
 import com.hoang.jwtjava.dto.request.IntrospectRequest;
 import com.hoang.jwtjava.dto.request.LogoutRequest;
 import com.hoang.jwtjava.dto.request.ResetPasswordRequest;
@@ -90,18 +91,26 @@ public class AuthenticationController {
                     """)
     public ResponseEntity<ApiResponse<AuthenticationResponse>> login(@RequestBody @Valid AuthenticationRequest request) {
         AuthTokens tokens = authenticationService.authenticate(request);
-        ResponseCookie refreshCookie = buildRefreshCookie(tokens.getRefreshToken());
-        AuthenticationResponse body = AuthenticationResponse.builder()
-                .accessToken(tokens.getAccessToken())
-                .authenticated(true)
-                .build();
+        return authSuccess("Login successful", tokens);
+    }
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(ApiResponse.<AuthenticationResponse>builder()
-                        .message("Login successful")
-                        .result(body)
-                        .build());
+    /**
+     * POST /api/v1/auth/google — Google Sign-In (ID token from FE).
+     */
+    @PostMapping("/google")
+    @SecurityRequirements
+    @Operation(
+            summary = "Login / register with Google",
+            description = """
+                    Public. FE lấy Google ID token (GIS / One Tap), gửi `{ "idToken": "..." }`.
+                    BE verify token với Google, tìm hoặc tạo user theo email, trả access token + cookie refresh
+                    giống `/login`. Cần `GOOGLE_AUTH_ENABLED=true` và `GOOGLE_CLIENT_ID` (Web client ID).
+                    Rate limit: 10 req/phút theo IP.
+                    """)
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> loginWithGoogle(
+            @RequestBody @Valid GoogleAuthRequest request) {
+        AuthTokens tokens = authenticationService.authenticateWithGoogle(request.getIdToken());
+        return authSuccess("Google login successful", tokens);
     }
 
     /**
@@ -168,19 +177,7 @@ public class AuthenticationController {
             @Parameter(hidden = true) HttpServletRequest httpRequest) {
         String refreshTokenFromCookie = readCookie(httpRequest, refreshCookieName);
         AuthTokens tokens = authenticationService.refresh(refreshTokenFromCookie);
-
-        ResponseCookie refreshCookie = buildRefreshCookie(tokens.getRefreshToken());
-        AuthenticationResponse body = AuthenticationResponse.builder()
-                .accessToken(tokens.getAccessToken())
-                .authenticated(true)
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(ApiResponse.<AuthenticationResponse>builder()
-                        .message("Token refreshed successfully")
-                        .result(body)
-                        .build());
+        return authSuccess("Token refreshed successfully", tokens);
     }
 
     /**
@@ -208,6 +205,21 @@ public class AuthenticationController {
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .body(ApiResponse.<Void>builder()
                         .message("Logout successful")
+                        .build());
+    }
+
+    private ResponseEntity<ApiResponse<AuthenticationResponse>> authSuccess(String message, AuthTokens tokens) {
+        ResponseCookie refreshCookie = buildRefreshCookie(tokens.getRefreshToken());
+        AuthenticationResponse body = AuthenticationResponse.builder()
+                .accessToken(tokens.getAccessToken())
+                .authenticated(true)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(ApiResponse.<AuthenticationResponse>builder()
+                        .message(message)
+                        .result(body)
                         .build());
     }
 

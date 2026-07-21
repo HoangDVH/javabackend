@@ -99,6 +99,9 @@ app:
     login-by-email:
       max-requests: 5
       window-seconds: 60
+    google-login:
+      max-requests: 10
+      window-seconds: 60
     refresh:
       max-requests: 20
       window-seconds: 60
@@ -114,6 +117,9 @@ app:
     reset-password:
       max-requests: 10
       window-seconds: 60
+  google:
+    enabled: ${GOOGLE_AUTH_ENABLED:false}
+    client-id: ${GOOGLE_CLIENT_ID:}
   mail:
     resend:
       enabled: ${MAIL_ENABLED:false}

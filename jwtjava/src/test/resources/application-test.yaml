@@ -21,6 +21,8 @@ app:
   mail:
     resend:
       enabled: false
+  google:
+    enabled: false
   redis:
     enabled: false
 

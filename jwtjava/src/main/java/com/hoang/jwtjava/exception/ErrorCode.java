@@ -33,6 +33,8 @@ public enum ErrorCode {
     ADDRESS_NOT_FOUND(1024, "Address not found", HttpStatus.NOT_FOUND),
     ADDRESS_INVALID(1025, "Address data is invalid", HttpStatus.BAD_REQUEST),
     SHIPPING_INFO_INVALID(1026, "Shipping information is invalid", HttpStatus.BAD_REQUEST),
+    GOOGLE_AUTH_DISABLED(1027, "Google sign-in is not enabled", HttpStatus.SERVICE_UNAVAILABLE),
+    GOOGLE_TOKEN_INVALID(1028, "Google ID token is invalid", HttpStatus.UNAUTHORIZED),
     TOO_MANY_REQUESTS(1017, "Too many requests", HttpStatus.TOO_MANY_REQUESTS),
     INVALID_RESET_TOKEN(1018, "Invalid or expired password reset link", HttpStatus.BAD_REQUEST),
     ;
