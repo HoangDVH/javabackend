@@ -60,7 +60,7 @@ public class OpenApiConfig {
                                 
                                 **Đơn hàng:** POST `/api/v1/orders` nhận `items` + `receiverName` + `receiverPhone` + `shippingAddress`. BE tính `shippingFee` (30k nếu subtotal &lt; 500k) và `totalAmount = subtotal + shippingFee` (COD/VNPay dùng total này).
                                 
-                                **Profile & sổ địa chỉ:** GET/PUT `/api/v1/users/me` (fullName, phone, password). CRUD `/api/v1/users/me/addresses` với `isDefault` (một địa chỉ mặc định / user).
+                                **Profile & sổ địa chỉ:** GET/PUT `/api/v1/users/me` (fullName, phone, avatarUrl, password). Google login lưu `avatarUrl` từ Google. CRUD `/api/v1/users/me/addresses` với `isDefault`.
                                 
                                 **Thanh toán VNPay:** POST `/api/v1/payments/vnpay` (JWT) trả `paymentUrl` → redirect user. VNPay gọi GET `/api/v1/payments/vnpay/ipn` (public) để cập nhật đơn PAID. Return URL cấu hình trên Vercel (`/payment/result`). Mock COD: POST `/api/v1/payments` với `method=CASH`. Hủy đơn chưa thanh toán: POST `/api/v1/orders/{id}/cancel`.
                                 """)

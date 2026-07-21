@@ -86,13 +86,25 @@ public class AuthenticationService {
                     .email(profile.email())
                     .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                     .fullName(blankToNull(profile.name()))
+                    .avatarUrl(blankToNull(profile.pictureUrl()))
                     .roles(Set.of("USER"))
                     .build();
             user = userRepository.save(user);
-        } else if ((user.getFullName() == null || user.getFullName().isBlank())
-                && profile.name() != null && !profile.name().isBlank()) {
-            user.setFullName(profile.name().trim());
-            user = userRepository.save(user);
+        } else {
+            boolean changed = false;
+            if ((user.getFullName() == null || user.getFullName().isBlank())
+                    && profile.name() != null && !profile.name().isBlank()) {
+                user.setFullName(profile.name().trim());
+                changed = true;
+            }
+            String picture = blankToNull(profile.pictureUrl());
+            if (picture != null && (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()
+                    || !picture.equals(user.getAvatarUrl()))) {
+                user.setAvatarUrl(picture);
+                changed = true;
+            }
+            if (changed)
+                user = userRepository.save(user);
         }
 
         return new AuthTokens(generateAccessToken(user), generateRefreshToken(user));

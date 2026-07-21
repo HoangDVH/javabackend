@@ -100,6 +100,8 @@ public class UserService {
             user.setFullName(blankToNull(request.getFullName()));
         if (request.getPhone() != null)
             user.setPhone(blankToNull(request.getPhone()));
+        if (request.getAvatarUrl() != null)
+            user.setAvatarUrl(blankToNull(request.getAvatarUrl()));
         return userMapper.toUserResponse(userRepository.save(user));
     }
 

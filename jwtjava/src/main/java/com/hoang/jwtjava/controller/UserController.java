@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "My profile", description = "Trả email, fullName, phone, roles.")
+    @Operation(summary = "My profile", description = "Trả email, fullName, phone, avatarUrl, roles.")
     public ResponseEntity<ApiResponse<UserResponse>> getMyInfo(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
                 .result(userService.getUserByEmail(jwt.getSubject()))
@@ -84,7 +84,7 @@ public class UserController {
     @PutMapping("/me")
     @Operation(
             summary = "Update my profile",
-            description = "Cập nhật tùy chọn: password và/hoặc fullName và/hoặc phone.")
+            description = "Cập nhật tùy chọn: password và/hoặc fullName và/hoặc phone và/hoặc avatarUrl.")
     public ResponseEntity<ApiResponse<UserResponse>> updateMyInfo(@AuthenticationPrincipal Jwt jwt,
                                                                    @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()

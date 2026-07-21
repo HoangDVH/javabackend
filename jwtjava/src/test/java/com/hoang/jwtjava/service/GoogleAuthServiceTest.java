@@ -73,7 +73,7 @@ class GoogleAuthServiceTest {
     @Test
     void googleLoginCreatesNewUser() {
         when(googleTokenVerifier.verify("token")).thenReturn(
-                new GoogleProfile("new@gmail.com", "New User", null, "sub-1"));
+                new GoogleProfile("new@gmail.com", "New User", "https://lh3.googleusercontent.com/a/photo", "sub-1"));
         when(userRepository.findByEmail("new@gmail.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
@@ -90,6 +90,7 @@ class GoogleAuthServiceTest {
         verify(userRepository).save(captor.capture());
         assertEquals("new@gmail.com", captor.getValue().getEmail());
         assertEquals("New User", captor.getValue().getFullName());
+        assertEquals("https://lh3.googleusercontent.com/a/photo", captor.getValue().getAvatarUrl());
         assertEquals(Set.of("USER"), captor.getValue().getRoles());
     }
 

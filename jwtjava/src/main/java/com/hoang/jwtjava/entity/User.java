@@ -31,6 +31,9 @@ public class User {
     @Column(length = 32)
     String phone;
 
+    @Column(name = "avatar_url", length = 1024)
+    String avatarUrl;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
