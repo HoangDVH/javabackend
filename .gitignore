@@ -14,3 +14,8 @@ uploads/*
 .DS_Store
 Thumbs.db
 *.swp
+
+# k6: giữ script smoke, bỏ binary/zip tải local
+tools/k6/**/k6.exe
+tools/k6/**/*.zip
+tools/k6/k6-*/

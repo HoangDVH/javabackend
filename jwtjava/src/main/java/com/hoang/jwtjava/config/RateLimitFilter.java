@@ -31,6 +31,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final String REGISTER_PATH = "/api/v1/auth/register";
     private static final String FORGOT_PASSWORD_PATH = "/api/v1/auth/forgot-password";
     private static final String RESET_PASSWORD_PATH = "/api/v1/auth/reset-password";
+    private static final String ORDERS_PATH = "/api/v1/orders";
+    private static final String PAYMENTS_PATH = "/api/v1/payments";
+    private static final String VNPAY_PAYMENTS_PATH = "/api/v1/payments/vnpay";
 
     private final RateLimitService rateLimitService;
     private final RateLimitProperties rateLimitProperties;
@@ -56,6 +59,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
             case REGISTER_PATH -> rateLimitService.check("register", clientIp, rateLimitProperties.getRegister());
             case FORGOT_PASSWORD_PATH -> rateLimitService.check("forgot-password", clientIp, rateLimitProperties.getForgotPassword());
             case RESET_PASSWORD_PATH -> rateLimitService.check("reset-password", clientIp, rateLimitProperties.getResetPassword());
+            case ORDERS_PATH -> rateLimitService.check("create-order", clientIp, rateLimitProperties.getCreateOrder());
+            case PAYMENTS_PATH, VNPAY_PAYMENTS_PATH ->
+                    rateLimitService.check("create-payment", clientIp, rateLimitProperties.getCreatePayment());
             default -> RateLimitDecision.allowed(Integer.MAX_VALUE);
         };
 

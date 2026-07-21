@@ -45,15 +45,31 @@ public class ProductService {
             Boolean inStock,
             Pageable pageable) {
         if (catalogCacheService.isActive()) {
-            var cached = catalogCacheService.getProductList(
+            PageResponse<ProductResponse> pageResponse = catalogCacheService.getOrLoadProductList(
                     categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating, hasDiscount,
-                    inStock, pageable);
-            if (cached.isPresent()) {
-                PageResponse<ProductResponse> pageResponse = cached.get();
-                return new PageImpl<>(pageResponse.getItems(), pageable, pageResponse.getTotalElements());
-            }
+                    inStock, pageable,
+                    () -> loadProductListPage(
+                            categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating,
+                            hasDiscount, inStock, pageable));
+            return new PageImpl<>(pageResponse.getItems(), pageable, pageResponse.getTotalElements());
         }
+        PageResponse<ProductResponse> pageResponse = loadProductListPage(
+                categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating, hasDiscount,
+                inStock, pageable);
+        return new PageImpl<>(pageResponse.getItems(), pageable, pageResponse.getTotalElements());
+    }
 
+    private PageResponse<ProductResponse> loadProductListPage(
+            Long categoryId,
+            Long brandId,
+            Boolean isFeatured,
+            String keyword,
+            Integer minPrice,
+            Integer maxPrice,
+            BigDecimal minRating,
+            Boolean hasDiscount,
+            Boolean inStock,
+            Pageable pageable) {
         Specification<Product> spec = Specification.allOf(
                 ProductSpecifications.categoryIdEquals(categoryId),
                 ProductSpecifications.brandIdEquals(brandId),
@@ -66,37 +82,28 @@ public class ProductService {
                 ProductSpecifications.inStock(inStock)
         );
         Page<ProductResponse> page = productRepository.findAll(spec, pageable).map(productMapper::toResponse);
-
-        if (catalogCacheService.isActive()) {
-            catalogCacheService.putProductList(
-                    categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating, hasDiscount,
-                    inStock, pageable,
-                    PageResponse.<ProductResponse>builder()
-                            .items(page.getContent())
-                            .totalElements(page.getTotalElements())
-                            .totalPages(page.getTotalPages())
-                            .page(page.getNumber())
-                            .size(page.getSize())
-                            .build());
-        }
-        return page;
+        return PageResponse.<ProductResponse>builder()
+                .items(page.getContent())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .build();
     }
 
     @Transactional(readOnly = true)
     public ProductResponse getProduct(Long id) {
         if (catalogCacheService.isActive()) {
-            var cached = catalogCacheService.getProduct(id);
-            if (cached.isPresent())
-                return cached.get();
+            return catalogCacheService.getOrLoadProduct(id, () -> loadProduct(id));
         }
+        return loadProduct(id);
+    }
 
-        ProductResponse response = productMapper.toResponse(
+    private ProductResponse loadProduct(Long id) {
+        return productMapper.toResponse(
                 productRepository.findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND))
         );
-        if (catalogCacheService.isActive())
-            catalogCacheService.putProduct(id, response);
-        return response;
     }
 
     @Transactional(readOnly = true)

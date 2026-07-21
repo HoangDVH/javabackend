@@ -92,6 +92,9 @@ class VnpayFlowIntegrationTest {
         item.setProductId(productId);
         item.setQuantity(1);
         request.setItems(List.of(item));
+        request.setReceiverName("Nguyễn Văn A");
+        request.setReceiverPhone("0901234567");
+        request.setShippingAddress("123 Nguyễn Huệ, Q1, TP.HCM");
 
         String json = mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", "Bearer " + token)

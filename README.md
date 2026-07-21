@@ -1,27 +1,37 @@
-# Java backend (Spring Boot + JWT)
+# Java backend (Spring Boot + JWT) — Easy Mart API
 
-API REST cho auth JWT, danh mục, sản phẩm, upload/lưu ảnh local.
+API REST cho Easy Mart: JWT auth, Google Sign-In, danh mục/sản phẩm (Redis cache), đơn hàng, thanh toán COD/VNPay, profile & sổ địa chỉ, WebSocket realtime orders.
+
+| | URL |
+|--|--|
+| **FE** | https://easy-mart-vert.vercel.app/ |
+| **BE (Render)** | https://javabackend-olfp.onrender.com |
+| **Swagger** | https://javabackend-olfp.onrender.com/swagger-ui/index.html |
+| **GitHub** | https://github.com/HoangDVH/javabackend |
 
 ## Cấu trúc
 
-- `pom.xml` (thư mục gốc repo) — **aggregator Maven**; IntelliJ/Cursor nên **mở cả repo gốc** hoặc *Reload Maven Project* để IDE nạp `jwtjava/` làm module → hết lỗi «Cannot resolve symbol» hàng loạt.
-- `jwtjava/` — module Spring Boot 3 (`./mvnw` trong thư mục đó; chạy build/test chủ yếu ở đây).
+- `pom.xml` (thư mục gốc) — aggregator Maven; IDE nên mở **repo gốc** rồi Reload Maven.
+- `jwtjava/` — module Spring Boot 3 (build/run/test chủ yếu ở đây).
+- `tools/k6/` — binary k6 + script smoke load test (không bắt buộc commit binary).
+- `render.yaml` — Blueprint Render (web + Redis Key Value Free).
 
 ### IntelliJ: `ClassNotFoundException: JwtjavaApplication`
 
-Cấu hình chạy (**Run → Edit Configurations**) phải có **Use classpath of module** = module Maven **`jwtjava`** (thư mục con), **không** chọn module aggregator gốc (`javabackend-aggregator`). Repo có sẵn `.idea/runConfigurations/JwtjavaApplication.xml` — sau **Reload Maven**, chọn Run **JwtjavaApplication**.
+**Use classpath of module** = module Maven **`jwtjava`** (không chọn aggregator gốc). Có sẵn `.idea/runConfigurations/JwtjavaApplication.xml`.
 
-### IntelliJ vẫn báo lỗi (Cannot resolve symbol)
+### IntelliJ vẫn báo Cannot resolve symbol
 
-1. Cài **plugin Lombok** và bật **Settings → Build, Execution, Deployment → Compiler → Annotation Processors → Enable annotation processing**.
-2. **Project SDK = JDK 17** (`File → Project Structure → Project`).
-3. Cửa sổ **Maven** → **Reload All Projects** (hoặc chuột phải `pom.xml` gốc → **Add as Maven Project**).
-4. **File → Invalidate Caches → Invalidate and Restart**.
+1. Plugin **Lombok** + Enable annotation processing.
+2. **Project SDK = JDK 17**.
+3. Maven → **Reload All Projects**.
+4. **Invalidate Caches → Restart** nếu cần.
 
 ## Yêu cầu
 
 - JDK 17+
-- MySQL 8 (mặc định cấu hình: DB `jwtjava`, port `3307` — đổi qua biến môi trường hoặc `application-local.yaml`).
+- MySQL 8 (local mặc định: DB `jwtjava`, port `3307`) **hoặc** Postgres (Render/`DATABASE_URL`)
+- Redis (tùy chọn local; **bật trên Render** cho blacklist JWT, rate limit, catalog cache)
 
 ## Chạy nhanh
 
@@ -32,98 +42,122 @@ cd jwtjava
 
 Ứng dụng: `http://localhost:8080`.
 
-### Swagger / OpenAPI
+- **Swagger UI**: http://localhost:8080/swagger-ui.html  
+- **OpenAPI JSON**: http://localhost:8080/v3/api-docs  
 
-- **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI JSON**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+### Try on Swagger (flow cơ bản)
 
-Tag order: **Authentication** first, then Categories, Products, Users. Request bodies show **Example Value** from `@Schema(example=…)`.
-
-#### Try on Swagger (typical flow)
-
-1. **Login** — open **Authentication** → `POST /api/v1/auth/login` → **Try it out**. Defaults suggest `admin@gmail.com` / `Admin@123456` (seeded admin). **Execute** → copy `result.accessToken` (refresh token is now returned via HttpOnly cookie, not in JSON).
-2. **Authorize** — **Authorize** (lock icon) → scheme **bearer-jwt** → paste **only** the access token (Swagger adds the `Bearer` prefix).
-3. **List products** — **Products** → `GET /api/v1/products` → **Try it out**:
-   - Do **not** set `isFeatured=true` if you want *all* products (omit the param when possible).
-   - Pagination: `page=0`, `size=20`, `sort=createdAt,desc` (do not use `string` as sort property).
-4. **Create product (ADMIN)** — `POST /api/v1/products`: use the example body (`categoryId` e.g. `1`, image https URL). Requires admin token in **Authorize**.
-5. **Upload images** — `POST /api/v1/products/images`: form field **`files`**, ADMIN only.
-6. **Create product + upload images (1 request)** — `POST /api/v1/products` với `multipart/form-data`:
-   - part **`product`**: JSON của `ProductCreateRequest`
-   - part **`files`**: 1-n file ảnh (tuỳ chọn). Backend sẽ tự upload/lưu và gộp URL vào `images`.
-7. **Update product + upload images (1 request)** — `PUT /api/v1/products/{id}` với `multipart/form-data`:
-   - part **`product`**: JSON của `ProductCreateRequest`
-   - part **`files`**: 1-n file ảnh (tuỳ chọn). Backend sẽ tự upload/lưu và gộp URL vào `images`.
-6. **Refresh token** — `POST /api/v1/auth/refresh` has **no request body**; backend reads refresh token from HttpOnly cookie and returns a new access token (+ rotates refresh cookie).
-
-## Cấu hình & bảo mật
-
-### Biến môi trường (khuyến nghị cho môi trường thật)
-
-| Biến | Mô tả |
-|--------|--------|
-| `JWTJAVA_DATASOURCE_URL` | JDBC URL MySQL |
-| `JWTJAVA_DATASOURCE_USERNAME` | User DB |
-| `JWTJAVA_DATASOURCE_PASSWORD` | Mật khẩu DB |
-| `JWT_SIGNER_KEY` | Base64 **256 bit** cho ký JWT HS256 |
-| `APP_SEED_ADMIN_EMAIL` | Email tài khoản admin seed |
-| `APP_SEED_ADMIN_PASSWORD` | Mật khẩu admin seed |
-| `CLOUDINARY_ENABLED` | `true` để `POST …/products/images` upload Cloudinary và trả `secure_url` |
-| `CLOUDINARY_CLOUD_NAME` | Dashboard Cloudinary |
-| `CLOUDINARY_API_KEY` | Dashboard Cloudinary |
-| `CLOUDINARY_API_SECRET` | Dashboard Cloudinary |
-
-Trên Windows (PowerShell) ví dụ:
-
-```powershell
-$env:JWT_SIGNER_KEY="..."; $env:JWTJAVA_DATASOURCE_PASSWORD="..."; cd jwtjava; ./mvnw spring-boot:run
-```
-
-### File local (không commit)
-
-Tạo `jwtjava/src/main/resources/application-local.yaml` (đã nằm trong `.gitignore`) để ghi đè URL DB, JWT, v.v. File này được import tùy chọn từ `application.yaml`.
-
-Tham chiếu: `jwtjava/src/main/resources/application-local.example.yaml`.
+1. **Login** — `POST /api/v1/auth/login` → copy `result.accessToken` (refresh qua HttpOnly cookie).
+2. **Authorize** — scheme **bearer-jwt**, paste access token.
+3. **Products** — `GET /api/v1/products` (`page=0`, `size=20`, `sort=createdAt,desc`).
+4. **Orders** — `POST /api/v1/orders` với `items` + `receiverName` + `receiverPhone` + `shippingAddress`.
+5. **COD** — `POST /api/v1/payments` `{ "orderId", "method": "CASH" }` (idempotent nếu đã SUCCESS).
+6. **VNPay** — `POST /api/v1/payments/vnpay` → mở `paymentUrl`; IPN public cập nhật `PAID`.
+7. **Refresh** — `POST /api/v1/auth/refresh` (không body, cần cookie).
 
 ## API tóm tắt
 
-- Auth: `POST /api/v1/auth/register`, `/login`, `/refresh`, `/introspect`
-  - `/login`: trả `accessToken` trong body, set `refresh_token` qua **HttpOnly cookie**.
-  - `/refresh`: **không nhận request body**, chỉ đọc refresh token từ cookie.
-- Sản phẩm (cần JWT; admin cho ghi): `/api/v1/products`
-- Upload ảnh (seller/admin): `POST /api/v1/products/images` (`multipart`, field `files`) — bật Cloudinary (`CLOUDINARY_ENABLED=true` + đủ key) thì response là URL Cloudinary; tắt thì vẫn lưu local `/files/...`
-- Ảnh tĩnh: `GET /files/product-images/...` (public)
-- Startup backfill: nếu ảnh cũ dạng local path `/files/product-images/...`, app sẽ tự thay sang ảnh managed mới (ưu tiên Cloudinary khi bật) để tránh mất ảnh sau lần redeploy trước.
+| Nhóm | Endpoints |
+|------|-----------|
+| Auth | `register`, `login`, `google` (`idToken`), `refresh`, `introspect`, `logout`, `forgot-password`, `reset-password` |
+| Catalog (public GET) | `/api/v1/products/**`, `/api/v1/categories/**` — Redis cache TTL ~2–30 phút, chống stampede |
+| Orders | CRUD buyer + cancel; seller fulfillment; shipping fee 30k nếu subtotal &lt; 500k |
+| Payments | COD `/api/v1/payments`; VNPay `/api/v1/payments/vnpay` + `/ipn` |
+| Users | `GET/PUT /api/v1/users/me`; addresses `/api/v1/users/me/addresses` |
+| Realtime | WebSocket orders — xem `jwtjava/REALTIME_ORDERS.md` |
+
+Upload ảnh: `POST /api/v1/products/images` (Cloudinary khi bật). Ảnh public: `GET /files/product-images/...`.
+
+## Anti-lag (Phase 0–2) — đã làm trong code
+
+Phase 3 (nâng Render/Postgres/Redis paid) **chưa làm** — chỉ khi Free không đủ.
+
+| Phase | Nội dung |
+|-------|----------|
+| **0** | `SlowRequestLoggingFilter` (mặc định ≥ 1000ms); log catalog cache HIT/MISS |
+| **1** | Hikari pool nhỏ (~8), `JPA_SHOW_SQL=false`, Tomcat threads; catalog **stampede lock**; soft rate limit order/payment |
+| **2** | Trừ/hoàn kho **atomic** (`decrementStockIfAvailable` / `incrementStock`); COD payment **idempotent** |
+
+### Soft rate limit
+
+- Chỉ **POST**; key Redis theo IP.
+- Auth (login/register/…) + **`POST /api/v1/orders`** (20/phút) + **`POST /api/v1/payments`** & `/payments/vnpay` (20/phút).
+- **Không** rate-limit GET catalog.
+- Redis tắt/lỗi → **fail-open** (cho qua).
+- Vượt ngưỡng → **429** + header `Retry-After`. FE nên backoff + jitter.
+
+### FE retry (gợi ý)
+
+1. Đọc `Retry-After` khi 429.  
+2. Exponential backoff + jitter (1s → 2s → 4s…).  
+3. Cold start Render: retry nhẹ 5xx/network; không spam POST.  
+Chi tiết thêm trong mô tả OpenAPI (Swagger).
+
+## Load test (k6)
+
+Script: `tools/k6/catalog-smoke.js`.
+
+```powershell
+# Warmup cold start trước
+Invoke-WebRequest "https://javabackend-olfp.onrender.com/api/v1/products?page=0&size=1" -TimeoutSec 120
+
+$env:VUS="3"; $env:DURATION="30s"
+.\tools\k6\k6-v1.3.0-windows-amd64\k6.exe run .\tools\k6\catalog-smoke.js
+```
+
+Smoke (3 VU, GET products, sau warmup): ~100% 200, latency avg ~4s trên Free — phù hợp vài–chục user browse, **không** phải hàng trăm concurrent bền vững.
+
+## Cấu hình & bảo mật
+
+### Biến môi trường chính
+
+| Biến | Mô tả |
+|------|--------|
+| `JWTJAVA_DATASOURCE_*` / `DATABASE_URL` | MySQL local hoặc Postgres (Render) |
+| `JWT_SIGNER_KEY` | Base64 256-bit HS256 |
+| `REDIS_ENABLED`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Cache / rate limit / JWT blacklist |
+| `HIKARI_MAX_POOL_SIZE` | Mặc định 8 (Free Postgres) |
+| `JPA_SHOW_SQL` | Mặc định `false` |
+| `SLOW_REQUEST_MS` | Ngưỡng log slow request (ms) |
+| `RATE_LIMIT_ENABLED` | Soft rate limit |
+| `CATALOG_CACHE_ENABLED` | Redis catalog cache |
+| `GOOGLE_AUTH_ENABLED`, `GOOGLE_CLIENT_ID` | Google Sign-In |
+| `VNPAY_*` | VNPay sandbox/prod |
+| `CLOUDINARY_*` | Upload ảnh |
+| `MAIL_ENABLED`, `RESEND_API_KEY`, … | Quên mật khẩu |
+| `APP_SEED_ADMIN_EMAIL` / `PASSWORD` | Admin seed |
+
+Local: copy `jwtjava/src/main/resources/application-local.example.yaml` → `application-local.yaml` (đã gitignore).
 
 ## Frontend (CORS)
 
-Chỉnh `app.cors.allowed-origins` trong `application.yaml` / `application-local.yaml` cho đúng origin SPA (ví dụ `http://localhost:5173`).
-Khi gọi auth từ browser, nhớ bật `credentials` để gửi/nhận cookie:
+`app.cors.allowed-origins` gồm Vercel + localhost. Auth từ browser cần `credentials: "include"` cho refresh cookie.
 
 ```js
-fetch("http://localhost:8080/api/v1/auth/refresh", {
+fetch("https://javabackend-olfp.onrender.com/api/v1/auth/refresh", {
   method: "POST",
   credentials: "include"
 });
 ```
 
+Production cookie: `JWT_REFRESH_COOKIE_SAME_SITE=None`, `JWT_REFRESH_COOKIE_SECURE=true`.
+
 ## Deploy Render
 
-1. Push code lên GitHub (repo này đã có sẵn `render.yaml` ở thư mục gốc).
-2. Trên Render: **New +** → **Blueprint** → chọn repo.
-3. Render sẽ tạo web service `jwtjava-api` (Docker, free web tier dùng được).
-4. Dùng PostgreSQL free bên ngoài (khuyến nghị **Neon** hoặc **Supabase**), lấy `DATABASE_URL`.
-5. Bắt buộc set env:
-   - `DATABASE_URL` (từ Neon/Supabase)
-   - `JWT_SIGNER_KEY` (Base64 256-bit)
-   - `APP_SEED_ADMIN_PASSWORD`
-   - `CLOUDINARY_ENABLED=true`
-   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (để ảnh sản phẩm không mất sau redeploy)
-6. App tự đọc `DATABASE_URL` và convert sang JDBC PostgreSQL khi khởi động.
-7. SPA dev tại `http://localhost:5173` gọi API **HTTPS** Render (khác site): `render.yaml` đã set `JWT_REFRESH_COOKIE_SAME_SITE=None` và `JWT_REFRESH_COOKIE_SECURE=true`. Nếu chỉnh tay trên dashboard Render, giữ cùng hai biến đó; không dùng `Lax`/`secure=false` cho tình huống này.
+1. Push GitHub → Render **Blueprint** (`render.yaml`).
+2. Postgres ngoài (Neon/Supabase/…) → set `DATABASE_URL`.
+3. Set secrets: `JWT_SIGNER_KEY`, Cloudinary, Redis (Blueprint gắn Key Value), VNPay, Google, Resend, …
+4. App convert `DATABASE_URL` → JDBC Postgres khi start.
 
-**Ghi chú:** Với API công khai kiểu [Swagger UI trên Render](https://javabackend-olfp.onrender.com/swagger-ui/index.html), cookie login vẫn được set trong response; trình duyệt chỉ gửi lại cookie đó khi gọi đúng domain API (`javabackend-olfp.onrender.com`) và client bật `credentials: "include"`.
+### Free tier sleep (cold start)
+
+- Free web **spin-down sau ~15 phút không traffic**; lần request sau ~30–60s wake.
+- **Không tắt sleep bằng code trong app.**
+- Giữ thức tạm: ping ngoài mỗi 10–14 phút (UptimeRobot / cron-job.org) — vẫn ăn **750 Free instance hours/tháng**.
+- Không sleep thật sự: nâng **Starter** (hoặc VPS / Oracle Always Free tự host).
+
+PaaS free giống Render mà always-on ổn định gần như không có; alternative free always-on thường là **VM tự quản** (Oracle Always Free + Docker/Coolify).
 
 ## License
 
-Dự án mẫu / nội bộ — bổ sung file `LICENSE` nếu public hóa repo.
+Dự án mẫu / nội bộ — bổ sung `LICENSE` nếu public hóa repo.

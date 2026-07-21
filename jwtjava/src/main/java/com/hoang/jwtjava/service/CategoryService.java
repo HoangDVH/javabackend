@@ -22,34 +22,30 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryResponse> listCategories() {
         if (catalogCacheService.isActive()) {
-            var cached = catalogCacheService.getCategoryList();
-            if (cached.isPresent())
-                return cached.get();
+            return catalogCacheService.getOrLoadCategoryList(this::loadCategoryList);
         }
+        return loadCategoryList();
+    }
 
-        List<CategoryResponse> categories = categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+    private List<CategoryResponse> loadCategoryList() {
+        return categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
                 .map(this::toResponse)
                 .toList();
-        if (catalogCacheService.isActive())
-            catalogCacheService.putCategoryList(categories);
-        return categories;
     }
 
     @Transactional(readOnly = true)
     public CategoryResponse getCategory(Long id) {
         if (catalogCacheService.isActive()) {
-            var cached = catalogCacheService.getCategory(id);
-            if (cached.isPresent())
-                return cached.get();
+            return catalogCacheService.getOrLoadCategory(id, () -> loadCategory(id));
         }
+        return loadCategory(id);
+    }
 
-        CategoryResponse response = toResponse(
+    private CategoryResponse loadCategory(Long id) {
+        return toResponse(
                 categoryRepository.findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
         );
-        if (catalogCacheService.isActive())
-            catalogCacheService.putCategory(id, response);
-        return response;
     }
 
     @Transactional(readOnly = true)

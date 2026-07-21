@@ -32,11 +32,23 @@ public class PaymentService {
 
         Order order = orderRepository.findByIdAndUserEmail(request.getOrderId(), userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-        if (order.getStatus() == OrderStatus.PAID)
-            throw new AppException(ErrorCode.PAYMENT_INVALID);
 
         String method = request.getMethod().trim().toUpperCase();
         if ("VNPAY".equals(method))
+            throw new AppException(ErrorCode.PAYMENT_INVALID);
+
+        // Idempotent: already paid → return existing SUCCESS payment (any method).
+        var existingSuccess = paymentRepository.findByOrder_IdAndStatus(order.getId(), PaymentStatus.SUCCESS);
+        if (!existingSuccess.isEmpty()) {
+            if (order.getStatus() != OrderStatus.PAID) {
+                order.setStatus(OrderStatus.PAID);
+                orderRepository.save(order);
+            }
+            return toResponse(existingSuccess.get(0), null);
+        }
+        if (order.getStatus() == OrderStatus.PAID)
+            throw new AppException(ErrorCode.PAYMENT_ALREADY_EXISTS);
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT)
             throw new AppException(ErrorCode.PAYMENT_INVALID);
 
         Payment payment = Payment.builder()

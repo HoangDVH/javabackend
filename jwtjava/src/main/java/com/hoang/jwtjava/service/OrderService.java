@@ -49,12 +49,15 @@ public class OrderService {
         List<OrderItem> items = new ArrayList<>();
         int subtotal = 0;
         for (OrderItemRequest itemRequest : request.getItems()) {
+            if (itemRequest.getQuantity() <= 0)
+                throw new AppException(ErrorCode.ORDER_ITEM_INVALID);
+
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-            if (itemRequest.getQuantity() <= 0)
-                throw new AppException(ErrorCode.ORDER_ITEM_INVALID);
-            if (product.getStock() < itemRequest.getQuantity())
+            int updated = productRepository.decrementStockIfAvailable(
+                    product.getId(), itemRequest.getQuantity());
+            if (updated == 0)
                 throw new AppException(ErrorCode.OUT_OF_STOCK);
 
             int unitPrice = product.getDiscountPrice() != null ? product.getDiscountPrice() : product.getPrice();
@@ -67,8 +70,6 @@ public class OrderService {
                     .fulfillmentStatus(FulfillmentStatus.AWAITING_CONFIRMATION)
                     .build());
             subtotal += unitPrice * itemRequest.getQuantity();
-
-            product.setStock(product.getStock() - itemRequest.getQuantity());
         }
 
         int shippingFee = ShippingFeeCalculator.calculate(subtotal);
@@ -199,9 +200,9 @@ public class OrderService {
 
     private void restoreStock(Order order) {
         for (OrderItem item : order.getItems()) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
-            product.setStock(product.getStock() + item.getQuantity());
+            int updated = productRepository.incrementStock(item.getProductId(), item.getQuantity());
+            if (updated == 0)
+                throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
         }
     }
 

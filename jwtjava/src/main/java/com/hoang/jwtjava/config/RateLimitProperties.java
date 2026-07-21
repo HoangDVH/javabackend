@@ -30,6 +30,12 @@ public class RateLimitProperties {
 
     EndpointLimit resetPassword = new EndpointLimit(10, 60);
 
+    /** Soft limit for POST /api/v1/orders (create). */
+    EndpointLimit createOrder = new EndpointLimit(20, 60);
+
+    /** Soft limit for POST /api/v1/payments and /api/v1/payments/vnpay. */
+    EndpointLimit createPayment = new EndpointLimit(20, 60);
+
     @Getter
     @Setter
     @FieldDefaults(level = AccessLevel.PRIVATE)

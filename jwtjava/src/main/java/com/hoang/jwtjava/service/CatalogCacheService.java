@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -30,6 +32,7 @@ public class CatalogCacheService {
 
     private static final String PRODUCT_VERSION_KEY = "catalog:products:version";
     private static final String CATEGORY_LIST_KEY = "catalog:categories:list";
+    private static final String LOCK_PREFIX = "catalog:lock:";
 
     private static final TypeReference<PageResponse<ProductResponse>> PRODUCT_LIST_TYPE =
             new TypeReference<>() {};
@@ -58,22 +61,7 @@ public class CatalogCacheService {
                 && redisTemplate.isPresent();
     }
 
-    public Optional<PageResponse<ProductResponse>> getProductList(
-            Long categoryId,
-            Long brandId,
-            Boolean isFeatured,
-            String keyword,
-            Integer minPrice,
-            Integer maxPrice,
-            BigDecimal minRating,
-            Boolean hasDiscount,
-            Boolean inStock,
-            Pageable pageable) {
-        return readJson(productListKey(categoryId, brandId, isFeatured, keyword, minPrice, maxPrice,
-                minRating, hasDiscount, inStock, pageable), PRODUCT_LIST_TYPE);
-    }
-
-    public void putProductList(
+    public PageResponse<ProductResponse> getOrLoadProductList(
             Long categoryId,
             Long brandId,
             Boolean isFeatured,
@@ -84,36 +72,25 @@ public class CatalogCacheService {
             Boolean hasDiscount,
             Boolean inStock,
             Pageable pageable,
-            PageResponse<ProductResponse> page) {
-        writeJson(
-                productListKey(categoryId, brandId, isFeatured, keyword, minPrice, maxPrice, minRating,
-                        hasDiscount, inStock, pageable),
-                page,
-                catalogCacheProperties.getProductListTtlSeconds());
+            Supplier<PageResponse<ProductResponse>> loader) {
+        String key = productListKey(categoryId, brandId, isFeatured, keyword, minPrice, maxPrice,
+                minRating, hasDiscount, inStock, pageable);
+        return getOrLoad(key, PRODUCT_LIST_TYPE, catalogCacheProperties.getProductListTtlSeconds(), loader);
     }
 
-    public Optional<ProductResponse> getProduct(Long id) {
-        return readJson(productDetailKey(id), ProductResponse.class);
+    public ProductResponse getOrLoadProduct(Long id, Supplier<ProductResponse> loader) {
+        return getOrLoad(productDetailKey(id), ProductResponse.class,
+                catalogCacheProperties.getProductDetailTtlSeconds(), loader);
     }
 
-    public void putProduct(Long id, ProductResponse product) {
-        writeJson(productDetailKey(id), product, catalogCacheProperties.getProductDetailTtlSeconds());
+    public List<CategoryResponse> getOrLoadCategoryList(Supplier<List<CategoryResponse>> loader) {
+        return getOrLoad(CATEGORY_LIST_KEY, CATEGORY_LIST_TYPE,
+                catalogCacheProperties.getCategoryListTtlSeconds(), loader);
     }
 
-    public Optional<List<CategoryResponse>> getCategoryList() {
-        return readJson(CATEGORY_LIST_KEY, CATEGORY_LIST_TYPE);
-    }
-
-    public void putCategoryList(List<CategoryResponse> categories) {
-        writeJson(CATEGORY_LIST_KEY, categories, catalogCacheProperties.getCategoryListTtlSeconds());
-    }
-
-    public Optional<CategoryResponse> getCategory(Long id) {
-        return readJson(categoryDetailKey(id), CategoryResponse.class);
-    }
-
-    public void putCategory(Long id, CategoryResponse category) {
-        writeJson(categoryDetailKey(id), category, catalogCacheProperties.getCategoryDetailTtlSeconds());
+    public CategoryResponse getOrLoadCategory(Long id, Supplier<CategoryResponse> loader) {
+        return getOrLoad(categoryDetailKey(id), CategoryResponse.class,
+                catalogCacheProperties.getCategoryDetailTtlSeconds(), loader);
     }
 
     public void invalidateProducts() {
@@ -124,6 +101,97 @@ public class CatalogCacheService {
         } catch (RuntimeException ex) {
             log.warn("Failed to invalidate product cache: {}", ex.getMessage());
         }
+    }
+
+    private <T> T getOrLoad(String key, Class<T> type, int ttlSeconds, Supplier<T> loader) {
+        Optional<T> cached = readJson(key, type);
+        if (cached.isPresent()) {
+            log.debug("Catalog cache HIT key={}", key);
+            return cached.get();
+        }
+        return loadWithStampedeGuard(key, ttlSeconds, loader, () -> readJson(key, type));
+    }
+
+    private <T> T getOrLoad(String key, TypeReference<T> type, int ttlSeconds, Supplier<T> loader) {
+        Optional<T> cached = readJson(key, type);
+        if (cached.isPresent()) {
+            log.debug("Catalog cache HIT key={}", key);
+            return cached.get();
+        }
+        return loadWithStampedeGuard(key, ttlSeconds, loader, () -> readJson(key, type));
+    }
+
+    private <T> T loadWithStampedeGuard(
+            String key,
+            int ttlSeconds,
+            Supplier<T> loader,
+            Supplier<Optional<T>> reader) {
+        if (!isActive()) {
+            log.info("Catalog cache MISS (inactive) key={}", key);
+            return loader.get();
+        }
+
+        log.info("Catalog cache MISS key={}", key);
+        String lockKey = LOCK_PREFIX + key;
+        boolean locked = tryLock(lockKey);
+        if (locked) {
+            try {
+                Optional<T> again = reader.get();
+                if (again.isPresent())
+                    return again.get();
+                T loaded = loader.get();
+                writeJson(key, loaded, ttlSeconds);
+                return loaded;
+            } finally {
+                unlock(lockKey);
+            }
+        }
+
+        Optional<T> waited = waitForCache(reader);
+        if (waited.isPresent())
+            return waited.get();
+
+        log.info("Catalog cache stampede fallback load key={}", key);
+        T loaded = loader.get();
+        writeJson(key, loaded, ttlSeconds);
+        return loaded;
+    }
+
+    private boolean tryLock(String lockKey) {
+        try {
+            Boolean ok = redisTemplate.get().opsForValue().setIfAbsent(
+                    lockKey,
+                    "1",
+                    Duration.ofSeconds(Math.max(1, catalogCacheProperties.getStampedeLockSeconds())));
+            return Boolean.TRUE.equals(ok);
+        } catch (RuntimeException ex) {
+            log.warn("Catalog stampede lock failed: {}", ex.getMessage());
+            return true; // fail open: allow this request to load
+        }
+    }
+
+    private void unlock(String lockKey) {
+        try {
+            redisTemplate.get().delete(lockKey);
+        } catch (RuntimeException ex) {
+            log.warn("Catalog stampede unlock failed: {}", ex.getMessage());
+        }
+    }
+
+    private <T> Optional<T> waitForCache(Supplier<Optional<T>> reader) {
+        long deadline = System.currentTimeMillis() + Math.max(50, catalogCacheProperties.getStampedeWaitMs());
+        while (System.currentTimeMillis() < deadline) {
+            Optional<T> value = reader.get();
+            if (value.isPresent())
+                return value;
+            try {
+                Thread.sleep(20L + ThreadLocalRandom.current().nextInt(20));
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
     }
 
     private String productListKey(
@@ -208,10 +276,7 @@ public class CatalogCacheService {
             if (json == null || json.isBlank())
                 return Optional.empty();
             return Optional.of(objectMapper.readValue(json, type));
-        } catch (JsonProcessingException ex) {
-            log.warn("Catalog cache read failed for {}: {}", key, ex.getMessage());
-            return Optional.empty();
-        } catch (RuntimeException ex) {
+        } catch (JsonProcessingException | RuntimeException ex) {
             log.warn("Catalog cache read failed for {}: {}", key, ex.getMessage());
             return Optional.empty();
         }
@@ -225,10 +290,7 @@ public class CatalogCacheService {
             if (json == null || json.isBlank())
                 return Optional.empty();
             return Optional.of(objectMapper.readValue(json, type));
-        } catch (JsonProcessingException ex) {
-            log.warn("Catalog cache read failed for {}: {}", key, ex.getMessage());
-            return Optional.empty();
-        } catch (RuntimeException ex) {
+        } catch (JsonProcessingException | RuntimeException ex) {
             log.warn("Catalog cache read failed for {}: {}", key, ex.getMessage());
             return Optional.empty();
         }
@@ -240,9 +302,7 @@ public class CatalogCacheService {
         try {
             String json = objectMapper.writeValueAsString(value);
             redisTemplate.get().opsForValue().set(key, json, Duration.ofSeconds(Math.max(1, ttlSeconds)));
-        } catch (JsonProcessingException ex) {
-            log.warn("Catalog cache write failed for {}: {}", key, ex.getMessage());
-        } catch (RuntimeException ex) {
+        } catch (JsonProcessingException | RuntimeException ex) {
             log.warn("Catalog cache write failed for {}: {}", key, ex.getMessage());
         }
     }

@@ -21,4 +21,10 @@ public class CatalogCacheProperties {
     int categoryListTtlSeconds = 1800;
 
     int categoryDetailTtlSeconds = 1800;
+
+    /** Redis lock TTL for cache stampede protection (seconds). */
+    int stampedeLockSeconds = 5;
+
+    /** How long waiters poll for a filled cache after missing the lock (milliseconds). */
+    int stampedeWaitMs = 400;
 }

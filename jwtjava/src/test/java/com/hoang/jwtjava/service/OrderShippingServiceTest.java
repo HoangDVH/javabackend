@@ -57,6 +57,7 @@ class OrderShippingServiceTest {
 
         when(userRepository.findByEmail("buyer@example.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decrementStockIfAvailable(1L, 1)).thenReturn(1);
         when(orderRepository.save(any())).thenAnswer(invocation -> {
             var order = invocation.getArgument(0, com.hoang.jwtjava.entity.Order.class);
             order.setId(10L);
@@ -100,6 +101,7 @@ class OrderShippingServiceTest {
 
         when(userRepository.findByEmail("buyer@example.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(2L)).thenReturn(Optional.of(product));
+        when(productRepository.decrementStockIfAvailable(2L, 1)).thenReturn(1);
         when(orderRepository.save(any())).thenAnswer(invocation -> {
             var order = invocation.getArgument(0, com.hoang.jwtjava.entity.Order.class);
             order.setId(11L);

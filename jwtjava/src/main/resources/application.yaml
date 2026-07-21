@@ -1,6 +1,12 @@
 server:
   port: 8080
   forward-headers-strategy: framework
+  tomcat:
+    # Free-tier Render: keep concurrent workers modest to avoid thrashing.
+    threads:
+      max: ${SERVER_TOMCAT_THREADS_MAX:50}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:5}
+    connection-timeout: ${SERVER_TOMCAT_CONNECTION_TIMEOUT:20s}
 
 # Swagger UI: /swagger-ui.html  |  OpenAPI: /v3/api-docs
 # Disable in production: springdoc.swagger-ui.enabled=false
@@ -25,11 +31,18 @@ spring:
     url: ${JWTJAVA_DATASOURCE_URL:jdbc:mysql://localhost:3307/jwtjava}
     username: ${JWTJAVA_DATASOURCE_USERNAME:root}
     password: ${JWTJAVA_DATASOURCE_PASSWORD:root}
+    hikari:
+      # Free Postgres ~20–25 connections; leave headroom for admin/migrations.
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:8}
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+      connection-timeout: ${HIKARI_CONNECTION_TIMEOUT:10000}
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT:300000}
+      max-lifetime: ${HIKARI_MAX_LIFETIME:600000}
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: ${JPA_SHOW_SQL:false}
 
 jwt:
   # Dev mặc định — production bắt buộc đặt JWT_SIGNER_KEY (Base64 256-bit).
@@ -91,6 +104,11 @@ app:
       product-detail-ttl-seconds: 120
       category-list-ttl-seconds: 1800
       category-detail-ttl-seconds: 1800
+      stampede-lock-seconds: 5
+      stampede-wait-ms: 400
+  observability:
+    # Phase 0: log WARN when request elapsedMs >= this threshold.
+    slow-request-ms: ${SLOW_REQUEST_MS:1000}
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     login:
@@ -116,6 +134,12 @@ app:
       window-seconds: 900
     reset-password:
       max-requests: 10
+      window-seconds: 60
+    create-order:
+      max-requests: 20
+      window-seconds: 60
+    create-payment:
+      max-requests: 20
       window-seconds: 60
   google:
     enabled: ${GOOGLE_AUTH_ENABLED:false}
