@@ -34,9 +34,9 @@ import java.net.URISyntaxException;
         @Tag(name = "Authentication", description = "Register, login, introspect, refresh (cookie), logout, forgot/reset password. Rate limit qua Redis."),
         @Tag(name = "Categories", description = "Danh mục sản phẩm (public). Redis cache list/detail TTL 30 phút."),
         @Tag(name = "Products", description = "Sản phẩm: list/filter/pagination, detail, CRUD seller/admin, upload ảnh. Redis cache list/detail TTL 2 phút."),
-        @Tag(name = "Orders", description = "Create and view your orders"),
+        @Tag(name = "Orders", description = "Tạo/xem/hủy đơn. Create nhận receiverName/phone/shippingAddress; BE tính shippingFee + totalAmount."),
         @Tag(name = "Payments", description = "Pay for your orders (mock cash/COD or VNPay gateway)"),
-        @Tag(name = "Users", description = "User management (admin)")
+        @Tag(name = "Users", description = "Profile /me (fullName, phone), sổ địa chỉ /me/addresses, admin user CRUD")
 })
 public class JwtjavaApplication {
 

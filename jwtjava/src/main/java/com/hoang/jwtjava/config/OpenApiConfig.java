@@ -24,10 +24,9 @@ public class OpenApiConfig {
             "Authentication", 0,
             "Categories", 1,
             "Products", 2,
-            "Chat", 3,
-            "Orders", 4,
-            "Payments", 5,
-            "Users", 6
+            "Orders", 3,
+            "Payments", 4,
+            "Users", 5
     );
 
     @Bean
@@ -56,6 +55,10 @@ public class OpenApiConfig {
                                 **Quên mật khẩu:** Resend HTTPS API gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
                                 
                                 **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
+                                
+                                **Đơn hàng:** POST `/api/v1/orders` nhận `items` + `receiverName` + `receiverPhone` + `shippingAddress`. BE tính `shippingFee` (30k nếu subtotal &lt; 500k) và `totalAmount = subtotal + shippingFee` (COD/VNPay dùng total này).
+                                
+                                **Profile & sổ địa chỉ:** GET/PUT `/api/v1/users/me` (fullName, phone, password). CRUD `/api/v1/users/me/addresses` với `isDefault` (một địa chỉ mặc định / user).
                                 
                                 **Thanh toán VNPay:** POST `/api/v1/payments/vnpay` (JWT) trả `paymentUrl` → redirect user. VNPay gọi GET `/api/v1/payments/vnpay/ipn` (public) để cập nhật đơn PAID. Return URL cấu hình trên Vercel (`/payment/result`). Mock COD: POST `/api/v1/payments` với `method=CASH`. Hủy đơn chưa thanh toán: POST `/api/v1/orders/{id}/cancel`.
                                 """)

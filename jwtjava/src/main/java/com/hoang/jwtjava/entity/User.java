@@ -25,6 +25,12 @@ public class User {
 
     String password;
 
+    @Column(name = "full_name", length = 255)
+    String fullName;
+
+    @Column(length = 32)
+    String phone;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")

@@ -53,8 +53,23 @@ public class Order {
     @OrderColumn(name = "sort_order")
     List<OrderItem> items;
 
+    @Column(name = "subtotal")
+    Integer subtotal;
+
+    @Column(name = "shipping_fee")
+    Integer shippingFee;
+
     @Column(name = "total_amount", nullable = false)
     Integer totalAmount;
+
+    @Column(name = "receiver_name", length = 255)
+    String receiverName;
+
+    @Column(name = "receiver_phone", length = 32)
+    String receiverPhone;
+
+    @Column(name = "shipping_address", length = 1000)
+    String shippingAddress;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)

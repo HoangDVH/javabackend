@@ -96,7 +96,16 @@ public class UserService {
     private UserResponse doUpdate(User user, UserUpdateRequest request) {
         if (request.getPassword() != null && !request.getPassword().isBlank())
             user.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (request.getFullName() != null)
+            user.setFullName(blankToNull(request.getFullName()));
+        if (request.getPhone() != null)
+            user.setPhone(blankToNull(request.getPhone()));
         return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    private static String blankToNull(String value) {
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String normalizeRole(String role) {

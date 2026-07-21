@@ -80,11 +80,22 @@ public class OrderRealtimeNotifier {
                 .map(this::toItemResponse)
                 .toList();
 
+        int itemsSubtotal = items.stream()
+                .mapToInt(item -> item.getUnitPrice() * item.getQuantity())
+                .sum();
+        Integer subtotal = order.getSubtotal() != null ? order.getSubtotal() : itemsSubtotal;
+        Integer shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
+
         return OrderResponse.builder()
                 .id(order.getId())
                 .userEmail(order.getUser().getEmail())
                 .items(items)
+                .subtotal(subtotal)
+                .shippingFee(shippingFee)
                 .totalAmount(order.getTotalAmount())
+                .receiverName(order.getReceiverName())
+                .receiverPhone(order.getReceiverPhone())
+                .shippingAddress(order.getShippingAddress())
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
                 .build();
@@ -99,12 +110,18 @@ public class OrderRealtimeNotifier {
         int sellerTotal = items.stream()
                 .mapToInt(item -> item.getUnitPrice() * item.getQuantity())
                 .sum();
+        Integer shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
 
         return OrderResponse.builder()
                 .id(order.getId())
                 .userEmail(order.getUser().getEmail())
                 .items(items)
+                .subtotal(sellerTotal)
+                .shippingFee(shippingFee)
                 .totalAmount(sellerTotal)
+                .receiverName(order.getReceiverName())
+                .receiverPhone(order.getReceiverPhone())
+                .shippingAddress(order.getShippingAddress())
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
                 .build();

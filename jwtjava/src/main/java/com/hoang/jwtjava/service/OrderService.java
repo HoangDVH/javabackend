@@ -47,7 +47,7 @@ public class OrderService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         List<OrderItem> items = new ArrayList<>();
-        int total = 0;
+        int subtotal = 0;
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -66,15 +66,23 @@ public class OrderService {
                     .sellerEmail(product.getSellerEmail())
                     .fulfillmentStatus(FulfillmentStatus.AWAITING_CONFIRMATION)
                     .build());
-            total += unitPrice * itemRequest.getQuantity();
+            subtotal += unitPrice * itemRequest.getQuantity();
 
             product.setStock(product.getStock() - itemRequest.getQuantity());
         }
 
+        int shippingFee = ShippingFeeCalculator.calculate(subtotal);
+        int totalAmount = subtotal + shippingFee;
+
         Order order = Order.builder()
                 .user(user)
                 .items(items)
-                .totalAmount(total)
+                .subtotal(subtotal)
+                .shippingFee(shippingFee)
+                .totalAmount(totalAmount)
+                .receiverName(request.getReceiverName().trim())
+                .receiverPhone(request.getReceiverPhone().trim())
+                .shippingAddress(request.getShippingAddress().trim())
                 .status(OrderStatus.PENDING_PAYMENT)
                 .build();
         Order savedOrder = orderRepository.save(order);
@@ -215,17 +223,37 @@ public class OrderService {
                         .build())
                 .toList();
 
-        int totalAmount = itemResponses.stream()
+        int itemsSubtotal = itemResponses.stream()
                 .mapToInt(item -> item.getUnitPrice() * item.getQuantity())
                 .sum();
-        if (sellerEmailFilter == null)
+
+        Integer subtotal = order.getSubtotal();
+        Integer shippingFee = order.getShippingFee();
+        int totalAmount;
+        if (sellerEmailFilter == null) {
+            if (subtotal == null)
+                subtotal = itemsSubtotal;
+            if (shippingFee == null)
+                shippingFee = 0;
             totalAmount = order.getTotalAmount();
+        } else {
+            // Seller view: item totals for their lines; shipping snapshot still from order.
+            subtotal = itemsSubtotal;
+            if (shippingFee == null)
+                shippingFee = 0;
+            totalAmount = itemsSubtotal;
+        }
 
         return OrderResponse.builder()
                 .id(order.getId())
                 .userEmail(order.getUser().getEmail())
                 .items(itemResponses)
+                .subtotal(subtotal)
+                .shippingFee(shippingFee)
                 .totalAmount(totalAmount)
+                .receiverName(order.getReceiverName())
+                .receiverPhone(order.getReceiverPhone())
+                .shippingAddress(order.getShippingAddress())
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
                 .build();

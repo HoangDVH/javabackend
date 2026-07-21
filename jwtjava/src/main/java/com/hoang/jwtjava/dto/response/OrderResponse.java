@@ -12,7 +12,12 @@ public class OrderResponse {
     private Long id;
     private String userEmail;
     private List<OrderItemResponse> items;
+    private Integer subtotal;
+    private Integer shippingFee;
     private Integer totalAmount;
+    private String receiverName;
+    private String receiverPhone;
+    private String shippingAddress;
     private String status;
     private LocalDateTime createdAt;
 }

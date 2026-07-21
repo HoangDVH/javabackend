@@ -36,6 +36,13 @@ public class OrderController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','SELLER','ADMIN')")
+    @Operation(
+            summary = "Create order",
+            description = """
+                    Tạo đơn hàng. Body bắt buộc: items + receiverName + receiverPhone + shippingAddress.
+                    BE tính subtotal từ giá SP, shippingFee (30k nếu subtotal < 500k, ngược lại 0),
+                    totalAmount = subtotal + shippingFee (dùng cho COD/VNPay).
+                    """)
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody @Valid OrderCreateRequest request) {

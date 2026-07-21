@@ -6,6 +6,7 @@ import com.hoang.jwtjava.dto.request.UserUpdateRequest;
 import com.hoang.jwtjava.dto.response.ApiResponse;
 import com.hoang.jwtjava.dto.response.UserResponse;
 import com.hoang.jwtjava.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "My profile", description = "Trả email, fullName, phone, roles.")
     public ResponseEntity<ApiResponse<UserResponse>> getMyInfo(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
                 .result(userService.getUserByEmail(jwt.getSubject()))
@@ -80,6 +82,9 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @Operation(
+            summary = "Update my profile",
+            description = "Cập nhật tùy chọn: password và/hoặc fullName và/hoặc phone.")
     public ResponseEntity<ApiResponse<UserResponse>> updateMyInfo(@AuthenticationPrincipal Jwt jwt,
                                                                    @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
