@@ -1,48 +1,70 @@
 package com.hoang.jwtjava.service;
 
 import com.hoang.jwtjava.config.MailProperties;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MailService {
 
+    private static final String BREVO_SEND_URL = "https://api.brevo.com/v3/smtp/email";
+    private static final Pattern FROM_PATTERN = Pattern.compile("^(.*)<([^>]+)>\\s*$");
+
     private final MailProperties mailProperties;
-    private final JavaMailSender mailSender;
+    private final RestClient restClient;
+
+    public MailService(MailProperties mailProperties) {
+        this.mailProperties = mailProperties;
+        this.restClient = RestClient.create();
+    }
 
     public void sendPasswordResetEmail(String toEmail, String rawToken) {
         String resetLink = buildResetLink(rawToken);
-        MailProperties.Smtp smtp = mailProperties.getSmtp();
+        MailProperties.Brevo brevo = mailProperties.getBrevo();
 
-        if (!smtp.isEnabled()) {
+        if (!brevo.isEnabled()) {
             log.info("Mail disabled — password reset link for {}: {}", toEmail, resetLink);
             return;
         }
 
-        if (isBlank(smtp.getUsername()) || isBlank(smtp.getPassword())) {
-            log.warn("MAIL_SMTP_USERNAME/PASSWORD missing — password reset link for {}: {}", toEmail, resetLink);
+        if (isBlank(brevo.getApiKey())) {
+            log.warn("BREVO_API_KEY missing — password reset link for {}: {}", toEmail, resetLink);
             return;
         }
 
-        String from = resolveFrom(smtp);
+        Sender sender = parseSender(brevo.getFrom());
+        if (sender == null) {
+            log.warn("MAIL_FROM missing/invalid — password reset link for {}: {}", toEmail, resetLink);
+            return;
+        }
+
+        Map<String, Object> body = Map.of(
+                "sender", Map.of(
+                        "name", sender.name(),
+                        "email", sender.email()),
+                "to", List.of(Map.of("email", toEmail)),
+                "subject", "Đặt lại mật khẩu Easy Mart",
+                "htmlContent", buildResetEmailHtml(resetLink));
+
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setFrom(from);
-            helper.setTo(toEmail);
-            helper.setSubject("Đặt lại mật khẩu Easy Mart");
-            helper.setText(buildResetEmailHtml(resetLink), true);
-            mailSender.send(message);
+            restClient.post()
+                    .uri(BREVO_SEND_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("api-key", brevo.getApiKey().trim())
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
             log.info("Password reset email sent to {}", toEmail);
-        } catch (MessagingException | MailException ex) {
+        } catch (RestClientException ex) {
             log.error("Failed to send password reset email to {}: {}", toEmail, ex.getMessage());
             throw new IllegalStateException("Failed to send password reset email", ex);
         }
@@ -55,10 +77,21 @@ public class MailService {
         return base + "?token=" + rawToken;
     }
 
-    private static String resolveFrom(MailProperties.Smtp smtp) {
-        if (!isBlank(smtp.getFrom()))
-            return smtp.getFrom().trim();
-        return smtp.getUsername().trim();
+    static Sender parseSender(String from) {
+        if (isBlank(from))
+            return null;
+        String trimmed = from.trim();
+        Matcher matcher = FROM_PATTERN.matcher(trimmed);
+        if (matcher.matches()) {
+            String name = matcher.group(1).trim();
+            String email = matcher.group(2).trim();
+            if (isBlank(email))
+                return null;
+            return new Sender(isBlank(name) ? email : name, email);
+        }
+        if (!trimmed.contains("@"))
+            return null;
+        return new Sender(trimmed, trimmed);
     }
 
     private static boolean isBlank(String value) {
@@ -72,5 +105,8 @@ public class MailService {
                 <p><a href="%s">Nhấn vào đây để đặt lại mật khẩu</a></p>
                 <p>Link có hiệu lực trong 30 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
                 """.formatted(resetLink);
+    }
+
+    record Sender(String name, String email) {
     }
 }

@@ -114,14 +114,14 @@ public class AuthenticationController {
     }
 
     /**
-     * POST /api/v1/auth/forgot-password — send reset link via Gmail SMTP.
+     * POST /api/v1/auth/forgot-password — send reset link via Brevo HTTPS API.
      */
     @PostMapping("/forgot-password")
     @SecurityRequirements
     @Operation(
             summary = "Forgot password",
             description = """
-                    Public. Gửi link đặt lại mật khẩu qua Gmail SMTP nếu tài khoản tồn tại.
+                    Public. Gửi link đặt lại mật khẩu qua Brevo API nếu tài khoản tồn tại.
                     Luôn trả 200 để không tiết lộ email có hay không.
                     Rate limit: 5 req/15 phút theo IP, 3 req/15 phút theo email.
                     """)

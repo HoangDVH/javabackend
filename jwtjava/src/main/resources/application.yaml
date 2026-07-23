@@ -145,13 +145,10 @@ app:
     enabled: ${GOOGLE_AUTH_ENABLED:false}
     client-id: ${GOOGLE_CLIENT_ID:}
   mail:
-    # Gmail SMTP: bật 2FA → tạo App Password tại https://myaccount.google.com/apppasswords
-    smtp:
+    # Brevo HTTPS API (Render Free không chặn port 443). Verify sender email trong Brevo dashboard.
+    brevo:
       enabled: ${MAIL_ENABLED:false}
-      host: ${MAIL_SMTP_HOST:smtp.gmail.com}
-      port: ${MAIL_SMTP_PORT:587}
-      username: ${MAIL_SMTP_USERNAME:}
-      password: ${MAIL_SMTP_PASSWORD:}
+      api-key: ${BREVO_API_KEY:}
       from: ${MAIL_FROM:}
     password-reset:
       frontend-url: ${APP_FRONTEND_RESET_URL:https://easy-mart-vert.vercel.app/reset-password}

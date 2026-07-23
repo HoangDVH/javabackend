@@ -12,19 +12,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.mail")
 public class MailProperties {
 
-    Smtp smtp = new Smtp();
+    Brevo brevo = new Brevo();
 
     PasswordReset passwordReset = new PasswordReset();
 
     @Getter
     @Setter
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class Smtp {
+    public static class Brevo {
         boolean enabled = false;
-        String host = "smtp.gmail.com";
-        int port = 587;
-        String username = "";
-        String password = "";
+        String apiKey = "";
         /** Ví dụ: {@code Easy Mart <you@gmail.com>} hoặc chỉ {@code you@gmail.com}. */
         String from = "";
     }

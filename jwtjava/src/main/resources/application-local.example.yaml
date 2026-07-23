@@ -19,21 +19,18 @@
 #     folder: jwtjava/products
 # Hoặc dùng biến môi trường: CLOUDINARY_ENABLED=true, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 #
-# Quên mật khẩu (Gmail SMTP — không cần mua domain):
-# 1) Bật 2FA trên Google Account
-# 2) Tạo App Password: https://myaccount.google.com/apppasswords
+# Quên mật khẩu (Brevo HTTPS API — chạy được trên Render Free, không cần mua domain):
+# 1) Đăng ký https://www.brevo.com → Settings → Senders → Add & verify Gmail
+# 2) SMTP & API → API Keys → Create a new API key
 # app:
 #   mail:
-#     smtp:
+#     brevo:
 #       enabled: true
-#       host: smtp.gmail.com
-#       port: 587
-#       username: "you@gmail.com"
-#       password: "xxxx xxxx xxxx xxxx"
+#       api-key: "xkeysib-..."
 #       from: "Easy Mart <you@gmail.com>"
 #     password-reset:
 #       frontend-url: "http://localhost:5173/reset-password"
-# Hoặc env: MAIL_ENABLED=true, MAIL_SMTP_USERNAME, MAIL_SMTP_PASSWORD, MAIL_FROM, APP_FRONTEND_RESET_URL
+# Hoặc env: MAIL_ENABLED=true, BREVO_API_KEY, MAIL_FROM, APP_FRONTEND_RESET_URL
 #
 # Thanh toán VNPay:
 # app:
