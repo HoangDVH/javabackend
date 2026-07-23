@@ -50,7 +50,13 @@ services:
           property: port
       - key: MAIL_ENABLED
         value: "true"
-      - key: RESEND_API_KEY
+      - key: MAIL_SMTP_HOST
+        value: "smtp.gmail.com"
+      - key: MAIL_SMTP_PORT
+        value: "587"
+      - key: MAIL_SMTP_USERNAME
+        sync: false
+      - key: MAIL_SMTP_PASSWORD
         sync: false
       - key: MAIL_FROM
         sync: false

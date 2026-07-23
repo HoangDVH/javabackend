@@ -48,7 +48,7 @@ Base path API: **`/api/v1`**.
 | **Google Identity Services** | Đăng nhập bằng Google ID token (`tokeninfo`) |
 | **VNPay Sandbox v2.1.0** | Thanh toán online (HMAC-SHA512, IPN) |
 | **Cloudinary** | Upload ảnh sản phẩm → `secure_url` |
-| **Resend** | Email quên mật khẩu (HTTPS API, tương thích Render Free) |
+| **Gmail SMTP** | Email quên mật khẩu (App Password, không cần domain) |
 | **Vercel** | Host FE SPA; CORS + cookie refresh cross-site |
 
 ### Thư viện / công cụ hỗ trợ
@@ -72,7 +72,7 @@ flowchart LR
   API --> Cloudinary
   API --> Google[Google_tokeninfo]
   API --> VNPay
-  API --> Resend
+  API --> GmailSMTP
 ```
 
 - **1 instance** web Docker trên Render Free (+ Redis Free + Postgres ngoài).
@@ -103,7 +103,7 @@ JWT claim `scope` = danh sách role (space-separated) → Spring `ROLE_*`. Seed 
 - **Logout**: invalidate access (blacklist Redis + fallback DB `invalidated_tokens`).
 - **Introspect**: kiểm tra token còn hợp lệ.
 - **Google Sign-In**: FE GIS → `POST /auth/google` `{ "idToken" }` → verify audience `GOOGLE_CLIENT_ID` → tìm/tạo user (email, fullName, **avatarUrl**) → cùng JWT + refresh cookie như login.
-- **Quên mật khẩu**: Resend gửi link SPA (`APP_FRONTEND_RESET_URL`); token one-time TTL 30 phút (Redis hoặc bảng `password_reset_tokens`).
+- **Quên mật khẩu**: Gmail SMTP gửi link SPA (`APP_FRONTEND_RESET_URL`); token one-time TTL 30 phút (Redis hoặc bảng `password_reset_tokens`).
 
 ### 4.2 Profile & sổ địa chỉ
 
@@ -329,7 +329,7 @@ Gọi auth từ browser cần `credentials: "include"`. Production Render: `Same
 | `GOOGLE_AUTH_ENABLED`, `GOOGLE_CLIENT_ID` | Google Sign-In |
 | `VNPAY_*` | Cổng VNPay |
 | `CLOUDINARY_*` | Upload ảnh |
-| `MAIL_ENABLED`, `RESEND_API_KEY`, `APP_FRONTEND_RESET_URL` | Quên MK |
+| `MAIL_ENABLED`, `MAIL_SMTP_USERNAME`, `MAIL_SMTP_PASSWORD`, `MAIL_FROM`, `APP_FRONTEND_RESET_URL` | Quên MK (Gmail SMTP) |
 | `APP_SEED_ADMIN_*` | Admin seed |
 | `JWT_REFRESH_COOKIE_SAME_SITE`, `JWT_REFRESH_COOKIE_SECURE` | Cookie cross-site |
 
@@ -339,7 +339,7 @@ Gọi auth từ browser cần `credentials: "include"`. Production Render: `Same
 
 1. Push GitHub → Blueprint `render.yaml` (web Docker + Redis Free).
 2. Gắn Postgres ngoài → `DATABASE_URL`.
-3. Điền secrets (JWT, Cloudinary, VNPay, Google, Resend, …).
+3. Điền secrets (JWT, Cloudinary, VNPay, Google, Gmail SMTP, …).
 4. Auto convert `DATABASE_URL` → JDBC Postgres lúc start.
 
 ### Free tier sleep

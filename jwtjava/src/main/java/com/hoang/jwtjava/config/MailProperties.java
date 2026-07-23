@@ -12,17 +12,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.mail")
 public class MailProperties {
 
-    Resend resend = new Resend();
+    Smtp smtp = new Smtp();
 
     PasswordReset passwordReset = new PasswordReset();
 
     @Getter
     @Setter
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class Resend {
+    public static class Smtp {
         boolean enabled = false;
-        String apiKey = "";
-        String from = "Easy Mart <onboarding@resend.dev>";
+        String host = "smtp.gmail.com";
+        int port = 587;
+        String username = "";
+        String password = "";
+        /** Ví dụ: {@code Easy Mart <you@gmail.com>} hoặc chỉ {@code you@gmail.com}. */
+        String from = "";
     }
 
     @Getter

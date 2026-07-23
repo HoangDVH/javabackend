@@ -56,7 +56,7 @@ public class OpenApiConfig {
                                 
                                 **Google Sign-In:** FE lấy Google ID token (GIS), gọi POST `/api/v1/auth/google` `{ "idToken": "..." }`. BE verify + find/create user, trả JWT giống login. Env: `GOOGLE_AUTH_ENABLED`, `GOOGLE_CLIENT_ID`.
                                 
-                                **Quên mật khẩu:** Resend HTTPS API gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
+                                **Quên mật khẩu:** Gmail SMTP gửi link reset tới SPA (`APP_FRONTEND_RESET_URL`). Token one-time TTL 30 phút (Redis hoặc DB fallback).
                                 
                                 **Refresh token:** HttpOnly cookie `refresh_token` trên path `/api/v1/auth` (SameSite=None trên production Render).
                                 

@@ -145,10 +145,14 @@ app:
     enabled: ${GOOGLE_AUTH_ENABLED:false}
     client-id: ${GOOGLE_CLIENT_ID:}
   mail:
-    resend:
+    # Gmail SMTP: bật 2FA → tạo App Password tại https://myaccount.google.com/apppasswords
+    smtp:
       enabled: ${MAIL_ENABLED:false}
-      api-key: ${RESEND_API_KEY:}
-      from: ${MAIL_FROM:Easy Mart <onboarding@resend.dev>}
+      host: ${MAIL_SMTP_HOST:smtp.gmail.com}
+      port: ${MAIL_SMTP_PORT:587}
+      username: ${MAIL_SMTP_USERNAME:}
+      password: ${MAIL_SMTP_PASSWORD:}
+      from: ${MAIL_FROM:}
     password-reset:
       frontend-url: ${APP_FRONTEND_RESET_URL:https://easy-mart-vert.vercel.app/reset-password}
       token-ttl-seconds: 1800
