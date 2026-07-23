@@ -32,8 +32,10 @@ public class DbSchemaMigrationRunner implements ApplicationRunner {
         if ("postgres".equals(dialect)) {
             runScript("sql/add_query_indexes_postgres.sql", dialect);
             runScript("sql/add_audit_triggers_postgres.sql", dialect);
+            runScript("sql/add_product_reviews_postgres.sql", dialect);
         } else {
             runScript("sql/add_query_indexes.sql", dialect);
+            runScript("sql/add_product_reviews.sql", dialect);
             log.info("MySQL triggers: chạy thủ công scripts/run-audit-triggers.ps1 (DELIMITER không chạy qua JDBC).");
         }
 
