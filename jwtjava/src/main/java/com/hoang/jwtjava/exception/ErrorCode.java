@@ -37,6 +37,10 @@ public enum ErrorCode {
     GOOGLE_TOKEN_INVALID(1028, "Google ID token is invalid", HttpStatus.UNAUTHORIZED),
     TOO_MANY_REQUESTS(1017, "Too many requests", HttpStatus.TOO_MANY_REQUESTS),
     INVALID_RESET_TOKEN(1018, "Invalid or expired password reset link", HttpStatus.BAD_REQUEST),
+    REVIEW_NOT_FOUND(1029, "Review not found", HttpStatus.NOT_FOUND),
+    REVIEW_INVALID(1030, "Review data is invalid", HttpStatus.BAD_REQUEST),
+    REVIEW_ALREADY_EXISTS(1031, "You have already reviewed this product", HttpStatus.CONFLICT),
+    REVIEW_NOT_ALLOWED(1032, "Only buyers who purchased this product can review it", HttpStatus.FORBIDDEN),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode httpStatusCode) {

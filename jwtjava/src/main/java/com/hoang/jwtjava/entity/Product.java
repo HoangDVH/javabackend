@@ -62,6 +62,10 @@ public class Product {
     @Column(nullable = false, precision = 3, scale = 2)
     BigDecimal rating;
 
+    @Column(nullable = false, name = "review_count")
+    @Builder.Default
+    Integer reviewCount = 0;
+
     @Column(nullable = false, name = "is_featured")
     boolean featured;
 
@@ -79,5 +83,7 @@ public class Product {
             images = new ArrayList<>();
         if (rating == null)
             rating = BigDecimal.ZERO;
+        if (reviewCount == null)
+            reviewCount = 0;
     }
 }

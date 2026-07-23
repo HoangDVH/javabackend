@@ -63,6 +63,7 @@ public class ProductMapper {
                 .sellerEmail(product.getSellerEmail())
                 .images(product.getImages() != null ? List.copyOf(product.getImages()) : List.of())
                 .rating(product.getRating())
+                .reviewCount(product.getReviewCount() != null ? product.getReviewCount() : 0)
                 .isFeatured(product.isFeatured())
                 .createdAt(product.getCreatedAt())
                 .build();

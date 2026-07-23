@@ -24,9 +24,10 @@ public class OpenApiConfig {
             "Authentication", 0,
             "Categories", 1,
             "Products", 2,
-            "Orders", 3,
-            "Payments", 4,
-            "Users", 5
+            "Reviews", 3,
+            "Orders", 4,
+            "Payments", 5,
+            "Users", 6
     );
 
     @Bean
@@ -63,6 +64,8 @@ public class OpenApiConfig {
                                 **Đơn hàng:** POST `/api/v1/orders` nhận `items` + `receiverName` + `receiverPhone` + `shippingAddress`. BE tính `shippingFee` (30k nếu subtotal &lt; 500k) và `totalAmount = subtotal + shippingFee` (COD/VNPay dùng total này). Trừ kho atomic (`stock >= qty`).
                                 
                                 **Profile & sổ địa chỉ:** GET/PUT `/api/v1/users/me` (fullName, phone, avatarUrl, password). Google login lưu `avatarUrl` từ Google. CRUD `/api/v1/users/me/addresses` với `isDefault`.
+                                
+                                **Đánh giá:** Public GET `/api/v1/products/{id}/reviews`. JWT POST/PUT/DELETE — chỉ buyer đã mua (đơn PAID), 1 review/user/sản phẩm. Rating TB + `reviewCount` cập nhật trên product.
                                 
                                 **Thanh toán:** COD `POST /api/v1/payments` idempotent (đã SUCCESS thì trả payment cũ). VNPay: POST `/api/v1/payments/vnpay` → `paymentUrl`; IPN public cập nhật PAID. Hủy đơn chưa thanh toán: POST `/api/v1/orders/{id}/cancel`.
                                 """)

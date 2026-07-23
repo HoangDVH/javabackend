@@ -28,6 +28,7 @@ public class ProductResponse {
     String sellerEmail;
     List<String> images;
     BigDecimal rating;
+    Integer reviewCount;
     boolean isFeatured;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
