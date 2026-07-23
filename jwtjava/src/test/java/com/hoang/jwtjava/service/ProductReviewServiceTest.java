@@ -25,6 +25,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +42,8 @@ class ProductReviewServiceTest {
     private OrderRepository orderRepository;
     @Mock
     private CatalogCacheService catalogCacheService;
+    @Mock
+    private ProductReviewRealtimeNotifier productReviewRealtimeNotifier;
 
     @InjectMocks
     private ProductReviewService productReviewService;
@@ -75,6 +78,11 @@ class ProductReviewServiceTest {
         assertEquals(0, new BigDecimal("5.00").compareTo(productCaptor.getValue().getRating()));
         assertEquals(1, productCaptor.getValue().getReviewCount());
         verify(catalogCacheService).invalidateProducts();
+        verify(productReviewRealtimeNotifier).publish(
+                eq(ProductReviewRealtimeNotifier.CREATED),
+                any(ProductReviewResponse.class),
+                any(Product.class),
+                eq("buyer@example.com"));
     }
 
     @Test

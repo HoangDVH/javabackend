@@ -65,7 +65,7 @@ public class OpenApiConfig {
                                 
                                 **Profile & sổ địa chỉ:** GET/PUT `/api/v1/users/me` (fullName, phone, avatarUrl, password). Google login lưu `avatarUrl` từ Google. CRUD `/api/v1/users/me/addresses` với `isDefault`.
                                 
-                                **Đánh giá:** Public GET `/api/v1/products/{id}/reviews`. JWT POST/PUT/DELETE — chỉ buyer đã mua (đơn PAID), 1 review/user/sản phẩm. Rating TB + `reviewCount` cập nhật trên product.
+                                **Đánh giá:** Public GET `/api/v1/products/{id}/reviews`. JWT POST/PUT/DELETE — chỉ buyer đã mua (đơn PAID), 1 review/user/sản phẩm. Rating TB + `reviewCount` cập nhật trên product. Realtime: STOMP `/topic/product-reviews/{productId}` + `/user/queue/reviews` (seller/reviewer).
                                 
                                 **Thanh toán:** COD `POST /api/v1/payments` idempotent (đã SUCCESS thì trả payment cũ). VNPay: POST `/api/v1/payments/vnpay` → `paymentUrl`; IPN public cập nhật PAID. Hủy đơn chưa thanh toán: POST `/api/v1/orders/{id}/cancel`.
                                 """)

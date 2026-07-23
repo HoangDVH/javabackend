@@ -33,7 +33,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/queue");
+        registry.enableSimpleBroker("/queue", "/topic");
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/app");
     }
@@ -57,7 +57,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     accessor.setUser(authenticate(accessor.getFirstNativeHeader("Authorization")));
                 }
                 if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())
-                        && !"/user/queue/orders".equals(accessor.getDestination()))
+                        && !isAllowedSubscribe(accessor.getDestination()))
                     throw new BadCredentialsException("Subscription destination not allowed");
                 if (StompCommand.SEND.equals(accessor.getCommand()))
                     throw new BadCredentialsException("Client messages are not allowed");
@@ -86,5 +86,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             throw new BadCredentialsException("Authenticated user role required");
 
         return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
+    }
+
+    private static boolean isAllowedSubscribe(String destination) {
+        if (destination == null || destination.isBlank())
+            return false;
+        if ("/user/queue/orders".equals(destination) || "/user/queue/reviews".equals(destination))
+            return true;
+        return destination.matches("/topic/product-reviews/\\d+");
     }
 }

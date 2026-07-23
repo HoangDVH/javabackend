@@ -31,6 +31,7 @@ public class ProductReviewService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final CatalogCacheService catalogCacheService;
+    private final ProductReviewRealtimeNotifier productReviewRealtimeNotifier;
 
     @Transactional(readOnly = true)
     public PageResponse<ProductReviewResponse> listByProduct(Long productId, Pageable pageable) {
@@ -65,7 +66,10 @@ public class ProductReviewService {
                 .build();
         ProductReview saved = productReviewRepository.save(review);
         refreshProductRating(product);
-        return toResponse(saved);
+        ProductReviewResponse response = toResponse(saved);
+        productReviewRealtimeNotifier.publish(
+                ProductReviewRealtimeNotifier.CREATED, response, product, userEmail);
+        return response;
     }
 
     @Transactional
@@ -78,8 +82,12 @@ public class ProductReviewService {
         review.setRating(request.getRating());
         review.setComment(normalizeComment(request.getComment()));
         ProductReview saved = productReviewRepository.save(review);
-        refreshProductRating(review.getProduct());
-        return toResponse(saved);
+        Product product = review.getProduct();
+        refreshProductRating(product);
+        ProductReviewResponse response = toResponse(saved);
+        productReviewRealtimeNotifier.publish(
+                ProductReviewRealtimeNotifier.UPDATED, response, product, userEmail);
+        return response;
     }
 
     @Transactional
@@ -90,8 +98,12 @@ public class ProductReviewService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
 
         Product product = review.getProduct();
+        ProductReviewResponse snapshot = toResponse(review);
+        String reviewerEmail = review.getUser().getEmail();
         productReviewRepository.delete(review);
         refreshProductRating(product);
+        productReviewRealtimeNotifier.publish(
+                ProductReviewRealtimeNotifier.DELETED, snapshot, product, reviewerEmail);
     }
 
     private void refreshProductRating(Product product) {

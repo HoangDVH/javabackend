@@ -6,6 +6,8 @@
 - Local URL: `ws://localhost:8080/ws`
 - Authentication: send the access token in the STOMP `CONNECT` header
 - Destination for both buyer and seller: `/user/queue/orders`
+- Product reviews (seller + reviewer): `/user/queue/reviews`
+- Live product page reviews: `/topic/product-reviews/{productId}`
 
 Access tokens with role `USER`, `SELLER`, or `ADMIN` can connect.
 
@@ -45,9 +47,27 @@ client.onConnect = () => {
     // event.order: OrderResponse
     refreshOrMergeOrder(event.order);
   });
+
+  // Seller inbox / reviewer confirmation
+  client.subscribe("/user/queue/reviews", (message) => {
+    const event = JSON.parse(message.body);
+    // event.type: REVIEW_CREATED | REVIEW_UPDATED | REVIEW_DELETED
+    // event.review, event.productId, event.productRating, event.reviewCount
+    refreshOrMergeReview(event);
+  });
 };
 
 client.activate();
+```
+
+Product detail page (live rating + list while viewing one product):
+
+```javascript
+client.subscribe(`/topic/product-reviews/${productId}`, (message) => {
+  const event = JSON.parse(message.body);
+  // Update stars from event.productRating / event.reviewCount
+  // Merge or remove event.review in the list by event.type
+});
 ```
 
 Call `client.deactivate()` on logout/unmount.
@@ -56,6 +76,7 @@ After reconnect:
 
 - Seller: `GET /api/v1/orders/seller/history`
 - Buyer: `GET /api/v1/orders`
+- Reviews: `GET /api/v1/products/{productId}/reviews`
 
 Realtime events are not persisted for offline clients.
 
@@ -67,6 +88,21 @@ Buyer receives events on:
 - Payment success (`PAID`)
 - Order cancelled
 - Seller fulfillment status changes (`CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`)
+
+## Review realtime events
+
+Pushed after commit on:
+
+- Create / update / delete review
+
+Destinations:
+
+| Destination | Who |
+|-------------|-----|
+| `/topic/product-reviews/{productId}` | Anyone subscribed for that product page |
+| `/user/queue/reviews` | Product seller + reviewer |
+
+Payload fields: `type`, `review`, `productId`, `productRating`, `reviewCount`, `occurredAt`.
 
 ## Update fulfillment status (seller)
 
